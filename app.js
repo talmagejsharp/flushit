@@ -1,0 +1,88 @@
+// Import required modules
+const express = require('express');
+const mongoose = require('mongoose');
+const bodyParser = require('body-parser'); // Import body-parser
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken'); // Import jsonwebtoken library
+const cors = require('cors'); // Import the cors middleware
+
+
+
+// Create an Express app
+const app = express();
+
+// Use the cors middleware
+app.use(cors());
+
+app.use(bodyParser.json()); // Parse JSON requests
+
+// Set up MongoDB connection
+mongoose.connect('mongodb+srv://talmagesharp321:Ihateps4@nebulacluster.9d57wlp.mongodb.net/?retryWrites=true&w=majority', {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+});
+
+const db = mongoose.connection;
+db.on('error', console.error.bind(console, 'MongoDB connection error:'));
+db.once('open', () => {
+  console.log('Connected to MongoDB');
+});
+
+const User = mongoose.model('User', {
+ username: String,
+ password: String,
+});
+
+app.post('/register', async (req, res) => {
+//  console.log('attempting to post the username and password');
+//  console.log(req);
+  const { username, password } = req.body;
+
+  // Hash the password before saving it
+  const hashedPassword = await bcrypt.hash(password, 10);
+
+  // Create a new user record in the database
+  const newUser = new User({ username, password: hashedPassword });
+  await newUser.save();
+
+  res.status(201).json({ message: 'User registered successfully' });
+});
+
+app.post('/login', async (req, res) => {
+  const { username, password } = req.body;
+
+  // Fetch user data from the database based on the provided username
+  const user = await User.findOne({ username });
+
+  if (!user) {
+    return res.status(401).json({ message: 'No User Found' });
+  }
+
+  // Compare the provided password with the hashed password in the database
+  const passwordMatch = await bcrypt.compare(password, user.password);
+
+  if (!passwordMatch) {
+    return res.status(401).json({ message: 'Invalid password' });
+  }
+
+  // Generate a JWT token
+  const token = jwt.sign({ userId: user._id }, 'your-secret-key');
+
+  res.status(200).json({ message: 'Login successful', token });
+//  console.log('login successful!');
+});
+// Set up your routes and middleware
+// ...
+
+// Start the Express server
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
+});
+
+/* Your Problems:
+1. You have no routes for your login and signup in your DB
+2. You need to have the login/signup pages use push commands to login
+3. You need to use user authentication.
+4. you should probably learn how to actually do it and not just have ChatGPT code it all for you hahahah
+*/
