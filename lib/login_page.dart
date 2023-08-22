@@ -5,11 +5,12 @@ import 'package:http/http.dart' as http;
 import 'global.dart';
 
 bool loggedIn = false;
+String errorMessage = "";
 
-Future<void> verifyUser(String username, String password, BuildContext context) async {
+Future<bool> verifyUser(String username, String password, BuildContext context) async {
   final url = Uri.parse('http://localhost:3000/login'); // Replace with your actual URL
   // Create a Map to hold the data
-  print('working on logging in at ');
+  print('working on logging in');
   final data = {'username': username, 'password': password};
   // Encode the data as JSON
   final jsonData = jsonEncode(data);
@@ -27,18 +28,26 @@ Future<void> verifyUser(String username, String password, BuildContext context) 
     isAuthenticated = true;
     globalUserName = username;
     Navigator.pushNamed(context, '/home');
+    return true;
   } else {
     print('Failed to log-in user');
     print(response.statusCode);
-
+    return false;
   }
 }
 
-class Login extends StatelessWidget {
+class Login extends StatefulWidget {
+
   @override
+  State<StatefulWidget> createState() => _LoginWidgetState();
+}
+class _LoginWidgetState extends State<Login> {
+  @override
+
   Widget build(BuildContext context) {
     String enteredUsername = "";
     String enteredPassword = "";
+
     return Scaffold(
       appBar: AppBar(
         title: Text('LOGIN'),
@@ -67,12 +76,26 @@ class Login extends StatelessWidget {
                   labelText: 'Password',
                 ),
               ),
+              errorMessage.isNotEmpty
+                  ? Text(
+                errorMessage,
+                style: TextStyle(color: Colors.red),
+              )
+                  : SizedBox(), // Empty SizedBox when no error message
               SizedBox(height: 16),
               ElevatedButton(
                 onPressed: () {
                   if (enteredUsername != "" && enteredPassword != "") {
                     // print ('username: '+ enteredUsername + ' password: ' +enteredPassword);
-                    verifyUser(enteredUsername, enteredPassword, context);
+                    if(verifyUser(enteredUsername, enteredPassword, context) == true){
+
+                    } else{
+                      errorMessage = "Incorrect Username or Password";
+                      setState(() {});
+                    }
+                  } else {
+                    errorMessage = "Please enter a username or password";
+                    setState(() {});
                   }
                   // Perform sign-up logic here
                 },
@@ -85,4 +108,5 @@ class Login extends StatelessWidget {
 
     );
   }
+
 }

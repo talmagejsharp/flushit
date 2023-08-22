@@ -29,10 +29,25 @@ Future<void> registerUser(String username, String password, BuildContext context
   }
 }
 
+Future<bool> isAvaliable(String username) async {
+  final response = await http.get(
+      Uri.parse('http://localhost:3000/check_username/$username'));
+  if (response.statusCode == 200) {
+    return true;
+  } else {
+    return false;
+  }
+}
 
-class SignUp extends StatelessWidget {
+
+class SignUp extends StatefulWidget {
+  @override
+  State<StatefulWidget> createState() => _SignupWidgetState();
+}
+class _SignupWidgetState extends State<SignUp> {
   String enteredUsername = "";
   String enteredPassword = "";
+  String errorMessage = "";
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -63,12 +78,34 @@ class SignUp extends StatelessWidget {
                   labelText: 'Password',
                 ),
               ),
+              errorMessage.isNotEmpty
+                  ? Text(
+                errorMessage,
+                style: TextStyle(color: Colors.red),
+              )
+                  : SizedBox(),
               SizedBox(height: 16),
               ElevatedButton(
                 onPressed: () {
                   if (enteredUsername != "" && enteredPassword != "") {
-                    print ('username: '+enteredUsername + ' password: ' +enteredPassword);
-                    registerUser(enteredUsername, enteredPassword, context);
+                    if(enteredUsername.length < 5){
+                      errorMessage = "Minimum length of username is 5 characters";
+                      setState(() {});
+                    } else if (enteredPassword.length < 8){
+                      errorMessage = "Minimum length of password is 8 characters";
+                      setState(() {});
+                    } else if(enteredUsername.length > 15){
+                      errorMessage = "Maximum length of username is 15 characters";
+                      setState(() {});
+                    } else if(isAvaliable(enteredUsername) == true){
+                      registerUser(enteredUsername, enteredPassword, context);
+                    } else {
+                      errorMessage = "Username already taken, please log in";
+                      setState(() {});
+                    }
+                  } else {
+                    errorMessage = "please enter a username and password";
+                    setState(() {});
                   }
                   // Perform sign-up logic here
                 },
@@ -81,4 +118,6 @@ class SignUp extends StatelessWidget {
 
     );
   }
+
+
 }

@@ -31,6 +31,35 @@ db.once('open', () => {
 const User = mongoose.model('User', {
  username: String,
  password: String,
+// profilePicture: Image,
+ email: String,
+
+});
+
+const Squat = mongoose.model('Squat', {
+ name: String,
+ location: String,
+// visits: Number,
+ image: String,
+});
+
+app.post('/new_squat', async(req, res) => {
+ const { name, location, image, visits } = req.body;
+ const newSquat = new Squat({ name, location, image });
+   await newSquat.save();
+
+   res.status(201).json({ message: 'Squat created successfully' });
+
+});
+
+app.get('/check_username/:username', async (req, res) => {
+  const { username } = req.params;
+  const user = await db.collection('users').findOne({ username });
+  if (user) {
+    res.send('taken');
+  } else {
+    res.send('available');
+  }
 });
 
 app.post('/register', async (req, res) => {
@@ -42,6 +71,7 @@ app.post('/register', async (req, res) => {
   const hashedPassword = await bcrypt.hash(password, 10);
 
   // Create a new user record in the database
+
   const newUser = new User({ username, password: hashedPassword });
   await newUser.save();
 
