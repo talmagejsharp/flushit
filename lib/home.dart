@@ -68,8 +68,13 @@ class _HomeState extends State<Home> {
             ),
             body: TabBarView(
                 children: [
-                  Center(child: Text(
-                      'Hello, ' + globalUserName + ' Welcome to Flushit!')),
+                  Center(child: Column(
+                    children: [
+                      Text(
+                          'Hello, ' + globalUserName + ' Welcome to Flushit!'),
+                      SquatView(),
+                    ],
+                  )),
                   Center(child: NewSquat()),
                   Center(child: Column(
                     children: [
@@ -89,7 +94,7 @@ class _HomeState extends State<Home> {
 
         ),
       );
-      // 
+      //
       throw UnimplementedError();
     } else {
       return Column(children: [
@@ -181,14 +186,52 @@ class SquatView extends StatefulWidget {
   State<StatefulWidget> createState() => _NewSquatView();
 }
 
-class _NewSquatView extends State<NewSquat> {
-
+class _NewSquatView extends State<SquatView> {
   @override
   Widget build(BuildContext context) {
-    return Column(
-        children: [
+    return FutureBuilder<List<Squat>>(
+      future: fetchSquats(), // Call the asynchronous function here
+      builder: (context, snapshot) {
 
-        ]
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return CircularProgressIndicator(); // Display a loading indicator
+        } else if (snapshot.hasError) {
+          return Text('Error: ${snapshot.error}');
+        } else if (snapshot.hasData) {
+          return SquatListWidget(
+              squats: snapshot.data!); // Pass the actual data
+        } else {
+          return Text('No data available.');
+        }
+      },
+    );
+  }
+}
+
+class SquatListWidget extends StatelessWidget  {
+  final List<Squat> squats; // Receive the squats list as a parameter
+
+  SquatListWidget({required this.squats});
+  @override
+  Widget build(BuildContext context) {
+    print('attempting to display ' + squats.length.toString()
+    );
+    return Container(
+      height: 400,
+      child: Center(
+        child: ListView.builder(
+          itemCount: squats.length,
+          itemBuilder: (context, index) {
+            final squat = squats[index];
+            return ListTile(
+              leading: Image.network(squat.image),
+              title: Text(squat.name),
+              subtitle: Text(squat.location),
+              // trailing: Text('Visits : ${squat.visits.toString()}')
+            );
+          },
+        ),
+      ),
     );
   }
 }
@@ -200,6 +243,7 @@ Future<List<Squat>> fetchSquats() async {
   final response = await http.get(
     url
   );
+  print('attempting to retrieve squats');
 
   // Handle the response as needed
   // ...
@@ -207,6 +251,7 @@ Future<List<Squat>> fetchSquats() async {
     final List<dynamic> jsonData = json.decode(response.body);
     return jsonData.map((data) => Squat.fromJson(data)).toList();
   } else {
+    print(response.statusCode);
     throw Exception('Failed to load squats');
   }
 }
@@ -214,13 +259,13 @@ Future<List<Squat>> fetchSquats() async {
 class Squat {
   final String name;
   final String location;
-  final int visits;
+  // final int visits;
   final String image;
 
   Squat({
     required this.name,
     required this.location,
-    required this.visits,
+    // required this.visits,
     required this.image,
   });
 
@@ -228,7 +273,7 @@ class Squat {
     return Squat(
       name: json['name'],
       location: json['location'],
-      visits: json['visits'],
+      // visits: json['visits'],
       image: json['image'],
     );
   }

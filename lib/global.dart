@@ -1,4 +1,4 @@
-// bool isAuthenticated = false;
+ // bool isAuthenticated = false;
 bool isAuthenticated = true;
 //For Development purposes
 

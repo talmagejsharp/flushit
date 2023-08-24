@@ -62,6 +62,16 @@ app.get('/check_username/:username', async (req, res) => {
   }
 });
 
+app.get('/squats', async (req, res) => {
+  try {
+//  log('Looking for squats in the database');
+    const squats = await Squat.find(); // Fetch all squats from the database
+    res.json(squats); // Return squats as JSON response
+  } catch (error) {
+    res.status(500).json({ error: 'Error fetching squats' });
+  }
+});
+
 app.post('/register', async (req, res) => {
 //  console.log('attempting to post the username and password');
 //  console.log(req);
