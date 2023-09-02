@@ -12,7 +12,9 @@ const cors = require('cors'); // Import the cors middleware
 const app = express();
 
 // Use the cors middleware
-app.use(cors());
+app.use(cors({
+    origin: 'http://flushit.org'
+}));
 
 app.use(bodyParser.json()); // Parse JSON requests
 
@@ -31,6 +33,7 @@ db.once('open', () => {
 const User = mongoose.model('User', {
  username: String,
  password: String,
+ email: String,
 // profilePicture: Image,
  email: String,
 
@@ -39,13 +42,13 @@ const User = mongoose.model('User', {
 const Squat = mongoose.model('Squat', {
  name: String,
  location: String,
-// visits: Number,
+ likes: Number,
  image: String,
 });
 
 app.post('/new_squat', async(req, res) => {
- const { name, location, image, visits } = req.body;
- const newSquat = new Squat({ name, location, image });
+ const { name, location, image, likes } = req.body;
+ const newSquat = new Squat({ name, location, image, likes});
    await newSquat.save();
 
    res.status(201).json({ message: 'Squat created successfully' });
@@ -56,9 +59,10 @@ app.get('/check_username/:username', async (req, res) => {
   const { username } = req.params;
   const user = await db.collection('users').findOne({ username });
   if (user) {
-    res.send('taken');
+    res.status(409).send('taken');
   } else {
-    res.send('available');
+    res.status(200).send('available');
+
   }
 });
 
@@ -75,14 +79,14 @@ app.get('/squats', async (req, res) => {
 app.post('/register', async (req, res) => {
 //  console.log('attempting to post the username and password');
 //  console.log(req);
-  const { username, password } = req.body;
+  const { username, email, password,  } = req.body;
 
   // Hash the password before saving it
   const hashedPassword = await bcrypt.hash(password, 10);
 
   // Create a new user record in the database
 
-  const newUser = new User({ username, password: hashedPassword });
+  const newUser = new User({ username, email, password: hashedPassword });
   await newUser.save();
 
   res.status(201).json({ message: 'User registered successfully' });

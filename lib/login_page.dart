@@ -8,7 +8,7 @@ bool loggedIn = false;
 String errorMessage = "";
 
 Future<bool> verifyUser(String username, String password, BuildContext context) async {
-  final url = Uri.parse('http://localhost:3000/login'); // Replace with your actual URL
+  final url = Uri.parse('http://flushit.org/login'); // Replace with your actual URL
   // Create a Map to hold the data
   print('working on logging in');
   final data = {'username': username, 'password': password};
@@ -42,11 +42,27 @@ class Login extends StatefulWidget {
   State<StatefulWidget> createState() => _LoginWidgetState();
 }
 class _LoginWidgetState extends State<Login> {
+  final FocusNode _passwordFocus = FocusNode();
+  attemptLogin(String username, String password, context) async {
+    if (username != "" && password != "") {
+      // print ('username: '+ enteredUsername + ' password: ' +enteredPassword);
+      if(await verifyUser(username, password, context) == true){
+
+      } else{
+        errorMessage = "Incorrect Username or Password";
+        setState(() {});
+      }
+    } else {
+      errorMessage = "Please enter a username or password";
+      setState(() {});
+    }
+  }
+
   @override
 
   Widget build(BuildContext context) {
-    String enteredUsername = "";
-    String enteredPassword = "";
+    final usernameController = TextEditingController();
+    final passwordController = TextEditingController();
 
     return Scaffold(
       appBar: AppBar(
@@ -59,18 +75,19 @@ class _LoginWidgetState extends State<Login> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               TextField(
-                onChanged: (String value) async {
-                  enteredUsername = value;
+                onEditingComplete: () {
+                  FocusScope.of(context).requestFocus(_passwordFocus);
                 },
+                controller: usernameController,
                 decoration: InputDecoration(
                   labelText: 'Username',
                 ),
               ),
               SizedBox(height: 16),
               TextField(
-                onChanged: (String value) async {
-                  enteredPassword = value;
-                },
+                onEditingComplete: (){ attemptLogin(usernameController.text, passwordController.text, context);},
+                focusNode: _passwordFocus,
+                controller: passwordController,
                 obscureText: true, // Mask the input for passwords
                 decoration: InputDecoration(
                   labelText: 'Password',
@@ -84,19 +101,9 @@ class _LoginWidgetState extends State<Login> {
                   : SizedBox(), // Empty SizedBox when no error message
               SizedBox(height: 16),
               ElevatedButton(
-                onPressed: () {
-                  if (enteredUsername != "" && enteredPassword != "") {
-                    // print ('username: '+ enteredUsername + ' password: ' +enteredPassword);
-                    if(verifyUser(enteredUsername, enteredPassword, context) == true){
-
-                    } else{
-                      errorMessage = "Incorrect Username or Password";
-                      setState(() {});
-                    }
-                  } else {
-                    errorMessage = "Please enter a username or password";
-                    setState(() {});
-                  }
+                onPressed: () async {
+                  attemptLogin(usernameController.text, passwordController.text, context);
+                  // Navigator.pushNamed(context, '/home');
                   // Perform sign-up logic here
                 },
                 child: Text('Login'),
