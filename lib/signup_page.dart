@@ -5,7 +5,7 @@ import 'package:http/http.dart' as http;
 import 'login_page.dart';
 
 Future<void> registerUser(String username, String email,  String password, BuildContext context) async {
-  final url = Uri.parse('http://flushit.org/register'); // Replace with your actual URL
+  final url = Uri.parse('http://144.24.34.230:3000/register'); // Replace with your actual URL
   // Create a Map to hold the data
   print('working on signing in at' + url.path);
   final data = {'username': username, 'email': email, 'password': password};

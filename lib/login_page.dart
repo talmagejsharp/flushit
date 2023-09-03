@@ -8,7 +8,8 @@ bool loggedIn = false;
 String errorMessage = "";
 
 Future<bool> verifyUser(String username, String password, BuildContext context) async {
-  final url = Uri.parse('http://flushit.org/login'); // Replace with your actual URL
+  final url = Uri.parse('http://144.24.34.230:3000/login'); // Using IP address and port directly
+  // Replace with your actual URL
   // Create a Map to hold the data
   print('working on logging in');
   final data = {'username': username, 'password': password};
