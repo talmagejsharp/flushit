@@ -8,8 +8,7 @@ import 'global.dart';
 
 Future<bool> newSquat(
     String name, String location, String imageUrl, BuildContext context) async {
-  final url = Uri.parse(
-      'http://flushit.org/new_squat'); // Replace with your actual URL
+  final url = Uri.parse('http://144.24.34.230:3000/new_squat'); // Replace with your actual URL
   // Create a Map to hold the data
   final data = {'name': name, 'location': location, 'image': imageUrl, 'likes': 0};
   print(data);
@@ -393,8 +392,7 @@ class SquatListWidget extends StatelessWidget {
 
 
 Future<List<Squat>> fetchSquats() async {
-  final url =
-      Uri.parse('http://flushit.org/squats'); // Replace with your actual URL
+  final url = Uri.parse('http://144.24.34.230:3000/squats'); // Replace with your actual URL
   // Create a Map to hold the data
   // Set the headers and make the POST request
   final response = await http.get(url);
@@ -481,8 +479,7 @@ class _ImagePickerScreenState extends State<ImagePickerScreen> {
 }
 
 Future<bool> like(String id) async {
-  final url = Uri.parse(
-      'http://flushit.org/like'); // Replace with your actual URL
+  final url = Uri.parse('http://144.24.34.230:3000/like'); // Replace with your actual URL
   // Create a Map to hold the data
   // Encode the data as JSON
   // Set the headers and make the POST request

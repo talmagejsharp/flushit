@@ -13,7 +13,7 @@ const app = express();
 
 // Use the cors middleware
 app.use(cors({
-    origin: 'http://flushit.org'
+    origin: 'http://144.24.34.230:3000'
 }));
 
 app.use(bodyParser.json()); // Parse JSON requests
