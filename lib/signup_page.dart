@@ -5,7 +5,7 @@ import 'package:http/http.dart' as http;
 import 'login_page.dart';
 
 Future<void> registerUser(String username, String email,  String password, BuildContext context) async {
-  final url = Uri.parse('http://144.24.34.230:3000/register'); // Replace with your actual URL
+  final url = Uri.parse('https://flushit.org/register'); // Replace with your actual URL
   // Create a Map to hold the data
   print('working on signing in at' + url.path);
   final data = {'username': username, 'email': email, 'password': password};
@@ -32,7 +32,7 @@ Future<void> registerUser(String username, String email,  String password, Build
 Future<bool> isAvaliable(String username) async {
   print('checking to see if '+ username + ' is avaliable');
   final response = await http.get(
-      Uri.parse('http://flushit.org/check_username/$username'));
+      Uri.parse('https://flushit.org/check_username/$username'));
   print(response.statusCode);
 
   if (response.statusCode == 200) {

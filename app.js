@@ -13,8 +13,25 @@ const app = express();
 
 // Use the cors middleware
 app.use(cors({
-    origin: 'http://144.24.34.230:3000'
+    origin: 'http://127.0.0.1:3000'
 }));
+
+function authenticateToken(req, res, next) {
+  // Get the token from the request headers
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1]; // Bearer <Token>
+
+  if (!token) return res.status(401).json({ message: 'Token not provided' });
+
+  // Verify the token
+  jwt.verify(token, 'your-secret-key', (err, user) => {
+    if (err) return res.status(403).json({ message: 'Invalid Token' });
+    req.user = user; // Store user info in the request object
+    next(); // Move to the next middleware or route handler
+  });
+}
+
+
 
 app.use(bodyParser.json()); // Parse JSON requests
 
@@ -66,7 +83,7 @@ app.get('/check_username/:username', async (req, res) => {
   }
 });
 
-app.get('/squats', async (req, res) => {
+app.get('/squats', authenticateToken, async (req, res) => {
   try {
 //  log('Looking for squats in the database');
     const squats = await Squat.find(); // Fetch all squats from the database
@@ -110,7 +127,7 @@ app.post('/login', async (req, res) => {
   }
 
   // Generate a JWT token
-  const token = jwt.sign({ userId: user._id }, 'your-secret-key');
+  const token = jwt.sign({ userId: user._id }, 'your-secret-key', [expiresIn: '1hr']);
 
   res.status(200).json({ message: 'Login successful', token });
 //  console.log('login successful!');
@@ -119,7 +136,7 @@ app.post('/login', async (req, res) => {
 // ...
 
 // Start the Express server
-const PORT = process.env.PORT || 80;
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server is running on port ${PORT}`);
 });
