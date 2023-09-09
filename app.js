@@ -13,7 +13,7 @@ const app = express();
 
 // Use the cors middleware
 app.use(cors({
-    origin: 'http://144.24.34.230:3000'
+    origin: 'http://127.0.0.1:3000'
 }));
 
 app.use(bodyParser.json()); // Parse JSON requests
