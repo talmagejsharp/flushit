@@ -1,9 +1,13 @@
 import 'dart:convert';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'global.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'secure_storage_service.dart';
+import 'notAuthenticated.dart';
 
 
 Future<bool> newSquat(
@@ -35,13 +39,52 @@ Future<bool> newSquat(
 
 class Home extends StatefulWidget {
   @override
+  State<StatefulWidget> createState() => _LoadHome();
+}
+
+class _LoadHome extends State<Home> {
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<String?>(
+      future: secureStorageService.readData('jwt'),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return CircularProgressIndicator(); // Display a loading indicator
+        } else if (snapshot.hasError) {
+          return Text('Error: ${snapshot.error}');
+        } else if (snapshot.hasData && snapshot.data != null) {
+          // Now, call accessProtectedRoute with a String instead of Future<String?>
+          return FutureBuilder<bool>(
+            future: accessProtectedRoute(snapshot.data!), // Assuming this returns Future<bool>
+            builder: (context, innerSnapshot) {
+              if (innerSnapshot.connectionState == ConnectionState.waiting) {
+                return CircularProgressIndicator();
+              } else if (innerSnapshot.hasError) {
+                return Text('Error: ${innerSnapshot.error}');
+              } else if (innerSnapshot.hasData && innerSnapshot.data == true) {
+                return LoggedIn(); // Or whatever you want to display when the user is logged in.
+              } else {
+                return LoggedOut(); // Or whatever you want to display when the user is not logged in.
+              }
+            },
+          );
+        } else {
+          return Text('No JWT available.');
+        }
+      },
+    );
+  }
+}
+
+
+class LoggedIn extends StatefulWidget {
+  @override
   State<StatefulWidget> createState() => _HomeState();
 }
 
 class _HomeState extends State<Home> {
   @override
   Widget build(BuildContext context) {
-    if (isAuthenticated == true) {
       return DefaultTabController(
         length: 4,
         child: Scaffold(
@@ -103,10 +146,10 @@ class _HomeState extends State<Home> {
                       'This is a profile page\n We will store user information here'),
                   ElevatedButton(
                       onPressed: () {
+                        secureStorageService.clearAllData();
                         print('attempting to log out');
                         Navigator.pushNamed(context, '/');
-                        globalUserName = "";
-                        isAuthenticated = false;
+
                       },
                       child: Text('LOGOUT'))
                 ],
@@ -116,20 +159,9 @@ class _HomeState extends State<Home> {
       );
       //
       throw UnimplementedError();
-    } else {
-      return Column(
-        children: [
-          Text(
-            'You are not authenticated please log in',
-          ),
-          ElevatedButton(
-              onPressed: () {
-                Navigator.pushNamed(context, '/');
-              },
-              child: Text('Back to Home'))
-        ],
-      );
-    }
+    /*} else {
+
+    }*/
   }
 }
 
@@ -392,10 +424,16 @@ class SquatListWidget extends StatelessWidget {
 
 
 Future<List<Squat>> fetchSquats() async {
+  final token = await secureStorageService.readData('jwt');
+    if (token == null) {
+      throw Exception('Token not found');
+    }
   final url = Uri.parse('https://flushit.org/squats'); // Replace with your actual URL
   // Create a Map to hold the data
   // Set the headers and make the POST request
-  final response = await http.get(url);
+  final response = await http.get(url, headers: {
+    'Authorization': 'Bearer $token',
+  });
   print('attempting to retrieve squats');
 
   // Handle the response as needed
@@ -406,6 +444,28 @@ Future<List<Squat>> fetchSquats() async {
   } else {
     print(response.statusCode);
     throw Exception('Failed to load squats');
+  }
+}
+
+Future<bool> accessProtectedRoute(String token) async {
+  final url = 'http://flutter.org/protected'; // replace with your actual URL
+  final response = await http.get(
+    Uri.parse(url),
+    headers: {'Authorization': 'Bearer $token'},
+  );
+
+  if (response.statusCode == 200) {
+    print('Successfully accessed protected route!');
+    return true;
+  } else if (response.statusCode == 401) {
+    print('Unauthorized - Token not provided or user not logged in');
+    return false;
+  } else if (response.statusCode == 403) {
+    print('Forbidden - Invalid token');
+    return false;
+  } else {
+    print('Something went wrong');
+    return false;
   }
 }
 

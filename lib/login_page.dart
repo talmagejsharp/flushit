@@ -1,8 +1,10 @@
 import 'dart:convert';
-
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'global.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'secure_storage_service.dart';
 
 bool loggedIn = false;
 String errorMessage = "";
@@ -29,6 +31,9 @@ Future<bool> verifyUser(String username, String password, BuildContext context) 
     isAuthenticated = true;
     globalUserName = username;
     Navigator.pushNamed(context, '/home');
+    final jsonResponse = json.decode(response.body);
+    final token = jsonResponse['token'];
+    await secureStorageService.writeData('jwt', token);
     return true;
   } else {
     print('Failed to log-in user');

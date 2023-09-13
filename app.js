@@ -17,14 +17,16 @@ app.use(cors({
 //    origin: 'http://127.0.0.1:3000' I'm having some trouble with CORS so let's try disabling this line
 }));
 
-
+app.use('/protected', authenticateToken, (req, res) => {
+  res.json({ message: 'You have accessed a protected route!' });
+});
 
 function authenticateToken(req, res, next) {
   // Get the token from the request headers
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1]; // Bearer <Token>
 
-  if (!token) return res.status(401).json({ message: 'Token not provided' });
+  if (!token) return res.0status(401).json({ message: 'Token not provided' });
 
   // Verify the token
   jwt.verify(token, 'your-secret-key', (err, user) => {
@@ -55,7 +57,7 @@ const User = mongoose.model('User', {
  password: String,
  email: String,
 // profilePicture: Image,
- email: String,
+// email: String,
 
 });
 
@@ -77,6 +79,22 @@ app.post('/new_squat', async(req, res) => {
 
    res.status(201).json({ message: 'Squat created successfully' });
 
+});
+
+app.get('/user-data', authenticateToken, async (req, res) => {
+    try {
+    const userId = req.user.userId;
+
+    const user = await User.findById(userId);
+
+    if(!user){
+        return res.status(404).json({ message: 'User not found'});
+    }
+
+    return res.json({email: user.email, username: user.username });
+    } catch (error) {
+        return res.status(500).json({ message: 'server error'});
+    }
 });
 
 app.get('/check_username/:username', async (req, res) => {
