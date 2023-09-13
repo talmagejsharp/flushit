@@ -16,6 +16,8 @@ app.use(cors({
 //    origin: 'http://127.0.0.1:3000' I'm having some trouble with CORS so let's try disabling this line
 }));
 
+
+
 function authenticateToken(req, res, next) {
   // Get the token from the request headers
   const authHeader = req.headers['authorization'];
@@ -31,7 +33,7 @@ function authenticateToken(req, res, next) {
   });
 }
 
-
+app.use(express.static(path.join(__dirname, '/build/web')));
 
 app.use(bodyParser.json()); // Parse JSON requests
 
@@ -61,6 +63,10 @@ const Squat = mongoose.model('Squat', {
  location: String,
  likes: Number,
  image: String,
+});
+
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, '/build/web', 'index.html'));
 });
 
 app.post('/new_squat', async(req, res) => {
