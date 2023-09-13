@@ -10,6 +10,7 @@ const cors = require('cors'); // Import the cors middleware
 
 // Create an Express app
 const app = express();
+const path = require('path');
 
 // Use the cors middleware
 app.use(cors({
