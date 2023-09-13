@@ -34,7 +34,7 @@ function authenticateToken(req, res, next) {
   });
 }
 
-app.use(express.static(path.join(__dirname, '/web')));
+app.use(express.static(path.join(__dirname, '/')));
 
 app.use(bodyParser.json()); // Parse JSON requests
 
@@ -67,7 +67,7 @@ const Squat = mongoose.model('Squat', {
 });
 
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, '/web', 'index.html'));
+    res.sendFile(path.join(__dirname, '/', 'home.html'));
 });
 
 app.post('/new_squat', async(req, res) => {
