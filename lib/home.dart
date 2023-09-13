@@ -4,6 +4,18 @@ import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'global.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+
+Future<String?> getToken() async {
+  final prefs = await SharedPreferences.getInstance();
+  return prefs.getString('jwtToken');
+}
+
+Future<void> _removeToken() async {
+  final prefs = await SharedPreferences.getInstance();
+  await prefs.remove('jwt_token');
+}
 
 
 Future<bool> newSquat(
@@ -41,7 +53,8 @@ class Home extends StatefulWidget {
 class _HomeState extends State<Home> {
   @override
   Widget build(BuildContext context) {
-    if (isAuthenticated == true) {
+    if (
+    getToken() != null) {
       return DefaultTabController(
         length: 4,
         child: Scaffold(
@@ -103,10 +116,10 @@ class _HomeState extends State<Home> {
                       'This is a profile page\n We will store user information here'),
                   ElevatedButton(
                       onPressed: () {
+                        _removeToken();
                         print('attempting to log out');
                         Navigator.pushNamed(context, '/');
-                        globalUserName = "";
-                        isAuthenticated = false;
+
                       },
                       child: Text('LOGOUT'))
                 ],
@@ -392,10 +405,16 @@ class SquatListWidget extends StatelessWidget {
 
 
 Future<List<Squat>> fetchSquats() async {
+  final token = await getToken();
+  if (token == null){
+    throw Exception('Token not found');
+  }
   final url = Uri.parse('https://flushit.org/squats'); // Replace with your actual URL
   // Create a Map to hold the data
   // Set the headers and make the POST request
-  final response = await http.get(url);
+  final response = await http.get(url, headers: {
+    'Authorization': 'Bearer $token',
+  });
   print('attempting to retrieve squats');
 
   // Handle the response as needed

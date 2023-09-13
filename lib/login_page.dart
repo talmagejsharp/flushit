@@ -1,11 +1,21 @@
 import 'dart:convert';
-
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'global.dart';
 
 bool loggedIn = false;
 String errorMessage = "";
+
+Future<void> storeToken(String token) async {
+  final prefs = await SharedPreferences.getInstance();
+  await prefs.setString('jwtToken', token);
+}
+
+Future<String?> getToken() async {
+  final prefs = await SharedPreferences.getInstance();
+  return prefs.getString('jwtToken');
+}
 
 Future<bool> verifyUser(String username, String password, BuildContext context) async {
   final url = Uri.parse('https://flushit.org/login'); // Using IP address and port directly
@@ -29,7 +39,10 @@ Future<bool> verifyUser(String username, String password, BuildContext context) 
     isAuthenticated = true;
     globalUserName = username;
     Navigator.pushNamed(context, '/home');
-    return true;
+    final jsonResponse = json.decode(response.body);
+    final token = jsonResponse['token'];
+    await storeToken(token);
+    return token;
   } else {
     print('Failed to log-in user');
     print(response.statusCode);
