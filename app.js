@@ -133,7 +133,7 @@ app.post('/login', async (req, res) => {
   }
 
   // Generate a JWT token
-  const token = jwt.sign({ userId: user._id }, 'your-secret-key', [expiresIn: '1hr']);
+  const token = jwt.sign({ userId: user._id }, 'your-secret-key', {expiresIn: '1hr'});
 
   res.status(200).json({ message: 'Login successful', token });
 //  console.log('login successful!');
