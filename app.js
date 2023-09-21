@@ -26,7 +26,7 @@ function authenticateToken(req, res, next) {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1]; // Bearer <Token>
 
-  if (!token) return res.0status(401).json({ message: 'Token not provided' });
+  if (!token) return res.status(401).json({ message: 'Token not provided' });
 
   // Verify the token
   jwt.verify(token, 'your-secret-key', (err, user) => {
