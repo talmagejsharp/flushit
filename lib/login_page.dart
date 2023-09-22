@@ -33,10 +33,10 @@ Future<bool> verifyUser(String username, String password, BuildContext context) 
     print('User logged-in successfully');
     isAuthenticated = true;
     globalUserName = username;
-    Navigator.pushNamed(context, '/home');
     final jsonResponse = json.decode(response.body);
     final token = jsonResponse['token'];
     await secureStorageService.writeData('jwt', token);
+    Navigator.pushNamed(context, '/home');
     return true;
   } else {
     print('Failed to log-in user');

@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:math';
+import 'package:flushit/userInfo.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
@@ -49,8 +50,10 @@ class _LoadHome extends State<Home> {
       future: secureStorageService.readData('jwt'),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
+          print('Outer FutureBuilder waiting');
           return CircularProgressIndicator(); // Display a loading indicator
         } else if (snapshot.hasError) {
+          print('Error: ${snapshot.error}, StackTrace: ${snapshot.stackTrace}');
           return Text('Error: ${snapshot.error}');
         } else if (snapshot.hasData && snapshot.data != null) {
           // Now, call accessProtectedRoute with a String instead of Future<String?>
@@ -82,7 +85,7 @@ class LoggedIn extends StatefulWidget {
   State<StatefulWidget> createState() => _HomeState();
 }
 
-class _HomeState extends State<Home> {
+class _HomeState extends State<LoggedIn> {
   @override
   Widget build(BuildContext context) {
       return DefaultTabController(
@@ -140,20 +143,7 @@ class _HomeState extends State<Home> {
               )),
               Center(child: NewSquat()),
               Center(
-                  child: Column(
-                children: [
-                  Text(
-                      'This is a profile page\n We will store user information here'),
-                  ElevatedButton(
-                      onPressed: () {
-                        secureStorageService.clearAllData();
-                        print('attempting to log out');
-                        Navigator.pushNamed(context, '/');
-
-                      },
-                      child: Text('LOGOUT'))
-                ],
-              )),
+                  child: UserInfo()),
               Center(child: ImagePickerScreen()),
             ])),
       );
@@ -448,7 +438,8 @@ Future<List<Squat>> fetchSquats() async {
 }
 
 Future<bool> accessProtectedRoute(String token) async {
-  final url = 'http://flutter.org/protected'; // replace with your actual URL
+  print("Attempting to accessProtectedRoute using token " + token);
+  final url = 'https://flushit.org/protected'; // replace with your actual URL
   final response = await http.get(
     Uri.parse(url),
     headers: {'Authorization': 'Bearer $token'},

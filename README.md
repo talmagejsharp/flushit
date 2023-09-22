@@ -19,9 +19,10 @@ Current Capabilities of Flushit:
 Hosted on Flushit.org, users are able to create accounts, login, logout and create squats.
 
 Things to do still:
-    1. Make sure user authentication works properly using JWT keys
+    1. Make sure user authentication works properly using JWT keys :)
     2. Create a user account page, users have rankings
-    3. Allow uploaded images to Flushit
-    4. Make a squat view page for each squat
-    5. Users can leave likes and comments on other squats
-    6. Start implementation of MapBox. Make the whole UI map based.
+    3. Clean code and make reused code into classes!
+    4. Allow uploaded images to Flushit
+    5. Make a squat view page for each squat
+    6. Users can leave likes and comments on other squats
+    7. Start implementation of MapBox. Make the whole UI map based.
