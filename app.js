@@ -84,7 +84,6 @@ app.post('/new_squat', async(req, res) => {
 app.get('/user-data', authenticateToken, async (req, res) => {
     try {
     const userId = req.user.userId;
-
     const user = await User.findById(userId);
 
     if(!user){
