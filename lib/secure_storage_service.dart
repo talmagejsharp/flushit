@@ -12,7 +12,7 @@ class SecureStorageService {
     print("attempting to read data with key: " + key);
 
     String? data = await _storage.read(key: key);
-    print("The data associated with " + key + " is " + data!);
+    // print("The data associated with " + key + " is " + data!);
     return data;
   }
 

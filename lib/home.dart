@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import 'package:http/http.dart' as http;
-import 'global.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'secure_storage_service.dart';
 import 'notAuthenticated.dart';
@@ -16,7 +15,6 @@ Future<bool> newSquat(
   final url = Uri.parse('https://flushit.org/new_squat'); // Replace with your actual URL
   // Create a Map to hold the data
   final data = {'name': name, 'location': location, 'image': imageUrl, 'likes': 0};
-  print(data);
   // Encode the data as JSON
   final jsonData = jsonEncode(data);
   // Set the headers and make the POST request
@@ -47,13 +45,11 @@ class _LoadHome extends State<Home> {
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<String?>(
-      future: secureStorageService.readData('jwt'),
+    future: secureStorageService.readData('jwt'),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          print('Outer FutureBuilder waiting');
-          return CircularProgressIndicator(); // Display a loading indicator
+          return Center(child: CircularProgressIndicator()); // Display a loading indicator
         } else if (snapshot.hasError) {
-          print('Error: ${snapshot.error}, StackTrace: ${snapshot.stackTrace}');
           return Text('Error: ${snapshot.error}');
         } else if (snapshot.hasData && snapshot.data != null) {
           // Now, call accessProtectedRoute with a String instead of Future<String?>
@@ -61,7 +57,7 @@ class _LoadHome extends State<Home> {
             future: accessProtectedRoute(snapshot.data!), // Assuming this returns Future<bool>
             builder: (context, innerSnapshot) {
               if (innerSnapshot.connectionState == ConnectionState.waiting) {
-                return CircularProgressIndicator();
+                return Center(child: CircularProgressIndicator());
               } else if (innerSnapshot.hasError) {
                 return Text('Error: ${innerSnapshot.error}');
               } else if (innerSnapshot.hasData && innerSnapshot.data == true) {
@@ -72,7 +68,7 @@ class _LoadHome extends State<Home> {
             },
           );
         } else {
-          return Text('No JWT available.');
+          return LoggedOut();
         }
       },
     );
@@ -89,7 +85,7 @@ class _HomeState extends State<LoggedIn> {
   @override
   Widget build(BuildContext context) {
       return DefaultTabController(
-        length: 4,
+        length: 3,
         child: Scaffold(
             appBar: AppBar(
               automaticallyImplyLeading: false,
@@ -121,11 +117,6 @@ class _HomeState extends State<LoggedIn> {
                     Icons.person,
                     color: Colors.white54,
                   )),
-                  Tab(
-                      icon: Icon(
-                    Icons.add_circle,
-                    color: Colors.white54,
-                  )),
                 ],
               ),
             ),
@@ -144,7 +135,6 @@ class _HomeState extends State<LoggedIn> {
               Center(child: NewSquat()),
               Center(
                   child: UserInfo()),
-              Center(child: ImagePickerScreen()),
             ])),
       );
       //
@@ -306,7 +296,7 @@ class _NewSquatView extends State<SquatView> {
       future: fetchSquats(), // Call the asynchronous function here
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return CircularProgressIndicator(); // Display a loading indicator
+          return Center(child: CircularProgressIndicator()); // Display a loading indicator
         } else if (snapshot.hasError) {
           return Text('Error: ${snapshot.error}');
         } else if (snapshot.hasData) {

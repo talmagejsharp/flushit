@@ -3,7 +3,6 @@ import 'package:flushit/customButtons.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'global.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'secure_storage_service.dart';
 
@@ -70,39 +69,52 @@ class _UserInfoPageState extends State<UserInfo> {
       return Center(child: Text('No user data available'));
     }
 
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+    return Scaffold(
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start, // Aligns children to the start (left) of the column
         children: [
-
-          CircleAvatar(
-            radius: 50,
-            backgroundImage: NetworkImage('https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQr8HYOWYPZeGsah03Cu0h0v5xq2c8m6d5X3Q&usqp=CAU'), // Replace with NetworkImage for network image
-            backgroundColor: Colors.deepPurple,
+          Padding(
+            padding: const EdgeInsets.all(20.0), // Adds padding around the avatar
+            child: Align(
+              alignment: Alignment.center,
+              child: CircleAvatar(
+                radius: 50,
+                backgroundImage: NetworkImage('https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQr8HYOWYPZeGsah03Cu0h0v5xq2c8m6d5X3Q&usqp=CAU'),
+                backgroundColor: Colors.deepPurple,
+              ),
+            ),
           ),
-          SizedBox(height: 20),
-          Text(
-            'Username: ${userData!['username']}',
-            style: TextStyle( fontSize: 20),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0), // Horizontal padding for the Text Widgets
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start, // Aligns text to the left
+              children: [
+                Row(
+                  children: [
+                    Text('Username: ${userData!['username']}', style: TextStyle(fontSize: 20)),
+                    IconButton(onPressed: (){}, icon: Icon(Icons.edit)),
+                  ],
+                ),
+                SizedBox(height: 10),
+                Row(
+                  children: [
+                    Text('Email: ${userData!['email']}', style: TextStyle(fontSize: 20)),
+                    IconButton(onPressed: (){}, icon: Icon(Icons.edit)),
+                  ],
+                ),
+                SizedBox(height: 10),
+                Text('User Rank: Gold', style: TextStyle(fontSize: 20)),
+              ],
+            ),
           ),
-          SizedBox(height: 10),
-          Text(
-            'Email: ${userData!['email']}',
-            style: TextStyle(fontSize: 20),
+          Expanded(
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0), // Adds padding around the logout button
+                child: LogoutButton(),
+              ),
+            ),
           ),
-          SizedBox(height: 10),
-          Text(
-            'Password: *********',
-            style: TextStyle(fontSize: 20),
-          ),
-          SizedBox(height: 10),
-          Text(
-            'User Rank: Gold',
-            style: TextStyle(fontSize: 20),
-          ),
-          SizedBox(height: 20),
-          LogoutButton(),
-          // other widgets displaying user data
         ],
       ),
     );
