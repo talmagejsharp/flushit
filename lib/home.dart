@@ -76,6 +76,9 @@ class _LoadHome extends State<Home> {
   }
 }
 
+void _LongClick(Point<double> point, LatLng){
+  print("It was tapped for a long time at: " + LatLng.toString());
+}
 
 class LoggedIn extends StatefulWidget {
   @override
@@ -93,14 +96,23 @@ class _HomeState extends State<LoggedIn> {
         child: Scaffold(
             appBar: AppBar(
               automaticallyImplyLeading: false,
-              title: Text(
-                'Flushit',
-                style: TextStyle(
-                  color: Colors.white,
-                  letterSpacing: 2.0,
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                ),
+              title: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                      width: 30,
+                      margin: EdgeInsets.all(10),
+                      child: Image.asset('assets/FlushitIcon.png')),
+                  Text(
+                    'Flushit',
+                    style: TextStyle(
+                      color: Colors.white,
+                      letterSpacing: 2.0,
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
               ),
               backgroundColor: Colors.deepPurple,
               bottom: TabBar(
@@ -147,10 +159,13 @@ class _HomeState extends State<LoggedIn> {
                   onMapCreated: (controller) {
                     mapController = controller;
                   },
+                  onMapLongClick: _LongClick,
                   initialCameraPosition: const CameraPosition(
                     target: LatLng(21.64, -157.92), // This is just a starting point, you can adjust as necessary
                     zoom: 11.0,
                   ),
+                  myLocationEnabled: true,
+                  myLocationTrackingMode: MyLocationTrackingMode.Tracking,
                 ),
               ),
             ])),
@@ -471,7 +486,7 @@ Future<bool> accessProtectedRoute(String token) async {
 class Squat {
   final String name;
   final String location;
-   final int likes;
+  final int likes;
   final String image;
 
   Squat({
@@ -485,7 +500,7 @@ class Squat {
     return Squat(
       name: json['name'],
       location: json['location'],
-       likes: json['likes'],
+      likes: json['likes'],
       image: json['image'],
     );
   }

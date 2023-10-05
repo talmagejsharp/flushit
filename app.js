@@ -66,6 +66,14 @@ const Squat = mongoose.model('Squat', {
  location: String,
  likes: Number,
  image: String,
+ coordinates: {
+    type: { type String, default: 'Point'},
+    coordinates: [Number]
+ }
+ /*creator: {
+    type: Schema.Types.ObjectId,
+    ref: 'User'
+ }*/
 });
 
 app.get('/', (req, res) => {
