@@ -8,7 +8,7 @@ import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'secure_storage_service.dart';
 import 'notAuthenticated.dart';
-
+import 'package:mapbox_gl/mapbox_gl.dart';
 
 Future<bool> newSquat(
     String name, String location, String imageUrl, BuildContext context) async {
@@ -39,9 +39,10 @@ Future<bool> newSquat(
 class Home extends StatefulWidget {
   @override
   State<StatefulWidget> createState() => _LoadHome();
-}
 
+}
 class _LoadHome extends State<Home> {
+
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<String?>(
@@ -82,10 +83,13 @@ class LoggedIn extends StatefulWidget {
 }
 
 class _HomeState extends State<LoggedIn> {
+  late MapboxMapController mapController;
+
+
   @override
   Widget build(BuildContext context) {
       return DefaultTabController(
-        length: 3,
+        length: 4,
         child: Scaffold(
             appBar: AppBar(
               automaticallyImplyLeading: false,
@@ -117,6 +121,11 @@ class _HomeState extends State<LoggedIn> {
                     Icons.person,
                     color: Colors.white54,
                   )),
+                  Tab(
+                      icon: Icon(
+                        Icons.map,
+                        color: Colors.white54,
+                      )),
                 ],
               ),
             ),
@@ -124,17 +133,26 @@ class _HomeState extends State<LoggedIn> {
               Center(
                   child: Column(
                 children: [
-                  // Padding(
-                  //   padding: const EdgeInsets.all(40.0),
-                  //   child: Text(
-                  //       'Hello, ' + globalUserName + ' Welcome to Flushit!'),
-                  // ),
                   SquatView(),
                 ],
               )),
               Center(child: NewSquat()),
               Center(
                   child: UserInfo()),
+              Container(
+                height: 300,  // adjust as necessary
+                width: 300,
+                child: MapboxMap(
+                  accessToken: 'pk.eyJ1IjoibWlkZ2U1NDMyMSIsImEiOiJjbG5jMHE2czUwaHduMm1vMWwzaDl1ZmpmIn0.F0c9U1e6dg43W-28N_Qelg',
+                  onMapCreated: (controller) {
+                    mapController = controller;
+                  },
+                  initialCameraPosition: const CameraPosition(
+                    target: LatLng(21.64, -157.92), // This is just a starting point, you can adjust as necessary
+                    zoom: 11.0,
+                  ),
+                ),
+              ),
             ])),
       );
       //
