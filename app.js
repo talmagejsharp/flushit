@@ -73,7 +73,7 @@ const Squat = mongoose.model('Squat', {
 });
 
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, '/', 'home.html'));
+    res.sendFile(path.join(__dirname, '/', 'build/web/index.html'));
 });
 
 app.post('/new_squat', async(req, res) => {
