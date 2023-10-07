@@ -5,8 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import 'package:http/http.dart' as http;
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'secure_storage_service.dart';
+// import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+// import 'secure_storage_service.dart';
 import 'notAuthenticated.dart';
 import 'package:mapbox_gl/mapbox_gl.dart';
 
@@ -42,32 +42,17 @@ class Home extends StatefulWidget {
 
 }
 class _LoadHome extends State<Home> {
-
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<String?>(
-    future: secureStorageService.readData('jwt'),
+    return FutureBuilder<bool>(
+      future: accessProtectedRoute(), // Directly try accessing the protected route
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return Center(child: CircularProgressIndicator()); // Display a loading indicator
+          return Center(child: CircularProgressIndicator());
         } else if (snapshot.hasError) {
           return Text('Error: ${snapshot.error}');
-        } else if (snapshot.hasData && snapshot.data != null) {
-          // Now, call accessProtectedRoute with a String instead of Future<String?>
-          return FutureBuilder<bool>(
-            future: accessProtectedRoute(snapshot.data!), // Assuming this returns Future<bool>
-            builder: (context, innerSnapshot) {
-              if (innerSnapshot.connectionState == ConnectionState.waiting) {
-                return Center(child: CircularProgressIndicator());
-              } else if (innerSnapshot.hasError) {
-                return Text('Error: ${innerSnapshot.error}');
-              } else if (innerSnapshot.hasData && innerSnapshot.data == true) {
-                return LoggedIn(); // Or whatever you want to display when the user is logged in.
-              } else {
-                return LoggedOut(); // Or whatever you want to display when the user is not logged in.
-              }
-            },
-          );
+        } else if (snapshot.hasData && snapshot.data == true) {
+          return LoggedIn();
         } else {
           return LoggedOut();
         }
@@ -437,16 +422,10 @@ class SquatListWidget extends StatelessWidget {
 
 
 Future<List<Squat>> fetchSquats() async {
-  final token = await secureStorageService.readData('jwt');
-    if (token == null) {
-      throw Exception('Token not found');
-    }
   final url = Uri.parse('https://flushit.org/squats'); // Replace with your actual URL
-  // Create a Map to hold the data
-  // Set the headers and make the POST request
-  final response = await http.get(url, headers: {
-    'Authorization': 'Bearer $token',
-  });
+
+  final response = await http.get(url);
+
   print('attempting to retrieve squats');
 
   // Handle the response as needed
@@ -460,13 +439,11 @@ Future<List<Squat>> fetchSquats() async {
   }
 }
 
-Future<bool> accessProtectedRoute(String token) async {
-  print("Attempting to accessProtectedRoute using token " + token);
+
+Future<bool> accessProtectedRoute() async {
+  print("Attempting to access protected route");
   final url = 'https://flushit.org/protected'; // replace with your actual URL
-  final response = await http.get(
-    Uri.parse(url),
-    headers: {'Authorization': 'Bearer $token'},
-  );
+  final response = await http.get(Uri.parse(url));
 
   if (response.statusCode == 200) {
     print('Successfully accessed protected route!');
@@ -482,6 +459,7 @@ Future<bool> accessProtectedRoute(String token) async {
     return false;
   }
 }
+
 
 class Squat {
   final String name;
