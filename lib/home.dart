@@ -7,8 +7,13 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 // import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 // import 'secure_storage_service.dart';
+import 'DioService.dart';
 import 'notAuthenticated.dart';
 import 'package:mapbox_gl/mapbox_gl.dart';
+import 'package:dio/dio.dart';
+import 'package:dio_cookie_manager/dio_cookie_manager.dart';
+import 'package:cookie_jar/cookie_jar.dart';
+
 
 Future<bool> newSquat(
     String name, String location, String imageUrl, BuildContext context) async {
@@ -443,22 +448,33 @@ Future<List<Squat>> fetchSquats() async {
 Future<bool> accessProtectedRoute() async {
   print("Attempting to access protected route");
   final url = 'https://flushit.org/protected'; // replace with your actual URL
-  final response = await http.get(Uri.parse(url));
 
-  if (response.statusCode == 200) {
-    print('Successfully accessed protected route!');
-    return true;
-  } else if (response.statusCode == 401) {
-    print('Unauthorized - Token not provided or user not logged in');
-    return false;
-  } else if (response.statusCode == 403) {
-    print('Forbidden - Invalid token');
-    return false;
-  } else {
-    print('Something went wrong');
+  try {
+    final response = await DioService().dio.get(url);
+
+    if (response.statusCode == 200) {
+      print('Successfully accessed protected route!');
+      return true;
+    } else {
+      print('Something went wrong');
+      return false;
+    }
+  } catch (e) {
+    if (e is DioError) {
+      if (e.response?.statusCode == 401) {
+        print('Unauthorized - Token not provided or user not logged in');
+      } else if (e.response?.statusCode == 403) {
+        print('Forbidden - Invalid token');
+      } else {
+        print('Error occurred: ${e.message}');
+      }
+    } else {
+      print('Unexpected error: $e');
+    }
     return false;
   }
 }
+
 
 
 class Squat {

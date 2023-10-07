@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'DioService.dart';
 import 'signup_page.dart';
 import 'login_page.dart';
 import 'home.dart';
@@ -52,7 +53,7 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-
+  final DioService dioService = DioService();
 
 
 
