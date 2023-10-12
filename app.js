@@ -16,7 +16,7 @@ app.use(cookieParser());
 
 // Use the cors middleware
 app.use(cors({
-    credentials: true
+    credentials: true,
     origin: 'http://localhost:52574' //I'm having some trouble with CORS so let's try disabling this line
 }));
 
