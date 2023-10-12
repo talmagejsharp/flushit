@@ -17,7 +17,7 @@ app.use(cookieParser());
 // Use the cors middleware
 app.use(cors({
     credentials: true
-    origin: 'localhost:52574' //I'm having some trouble with CORS so let's try disabling this line
+    origin: 'http://localhost:52574' //I'm having some trouble with CORS so let's try disabling this line
 }));
 
 app.use('/protected', authenticateToken, (req, res) => {
