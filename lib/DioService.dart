@@ -2,7 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:dio_cookie_manager/dio_cookie_manager.dart';
 import 'package:cookie_jar/cookie_jar.dart';
 
-class DioService {
+class DioService extends Interceptor{
   static final DioService _singleton = DioService._internal();
   final dio = Dio();
 

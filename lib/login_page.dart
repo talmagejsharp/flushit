@@ -5,6 +5,8 @@ import 'package:flushit/DioService.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:dio/dio.dart';
+import 'dart:io'; // This contains the Cookie class
+
 import 'package:dio_cookie_manager/dio_cookie_manager.dart';
 import 'package:cookie_jar/cookie_jar.dart';
 //import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -20,9 +22,8 @@ Future<bool> verifyUser(
 // Adding the CookieManager interceptor; you only need to add this once
 // so consider doing this during Dio initialization instead
 
-  final url =
-      'https://flushit.org/login'; // Using string directly, Dio will handle the URI conversion
-
+  final url = 'https://flushit.org/login'; // Using string directly, Dio will handle the URI conversion
+  print("Dio instance: ${DioService().dio.hashCode}" );
   final data = {'username': username, 'password': password};
 
   try {
@@ -31,6 +32,7 @@ Future<bool> verifyUser(
       data: data,
       options: Options(
         headers: {'Content-Type': 'application/json'},
+
       ),
     );
 
@@ -40,6 +42,8 @@ Future<bool> verifyUser(
 // So, there's no need to manually parse and save the JWT from Set-Cookie header.
 // However, if you want to handle the JWT manually, you can still do it.
 // (But that's unnecessary when using Dio with CookieJar).
+//       List<Cookie> cookies = cookieJar.loadForRequest(Uri.parse('https://flushit.org'));
+//       print(cookies); // This will print all cookies stored for the domain 'https://flushit.org'.
 
       Navigator.pushNamed(context, '/home');
       return true;

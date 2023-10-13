@@ -447,8 +447,9 @@ Future<List<Squat>> fetchSquats() async {
 
 Future<bool> accessProtectedRoute() async {
   print("Attempting to access protected route");
+  print("Dio instance: ${DioService().dio.hashCode}" );
   final url = 'https://flushit.org/protected'; // replace with your actual URL
-
+  // DioService().dio.options.withCredentials = true;
   try {
     final response = await DioService().dio.get(url);
 
