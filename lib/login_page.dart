@@ -8,12 +8,11 @@ import 'secure_storage_service.dart';
 import 'dart:html' as html;
 import 'package:flutter/foundation.dart';
 
-
-
 bool loggedIn = false;
 String errorMessage = "";
 
-Future<bool> verifyUser(String username, String password, BuildContext context) async {
+Future<bool> verifyUser(
+    String username, String password, BuildContext context) async {
   final url = Uri.parse('https://flushit.org/login');
   final data = {'username': username, 'password': password};
   final jsonData = jsonEncode(data);
@@ -31,7 +30,8 @@ Future<bool> verifyUser(String username, String password, BuildContext context) 
     // Check if the app is running on web or mobile
     if (kIsWeb) {
       // Store the JWT in Session Storage for web
-      html.window.sessionStorage['jwt'] = token; // Change to `localStorage` if you want it to persist across sessions
+      html.window.sessionStorage['jwt'] =
+          token; // Change to `localStorage` if you want it to persist across sessions
     } else {
       // Store the JWT using secureStorageService for mobile
       await secureStorageService.writeData('jwt', token);
@@ -47,24 +47,23 @@ Future<bool> verifyUser(String username, String password, BuildContext context) 
   }
 }
 
-
 _cookieStorage(String cookies) {
-  html.window.document.cookie= "jwt=${cookies}; expires=Fri, 14 Oct 2023 12:00:00 UTC";
+  html.window.document.cookie =
+      "jwt=${cookies}; expires=Fri, 14 Oct 2023 12:00:00 UTC";
 }
 
 class Login extends StatefulWidget {
-
   @override
   State<StatefulWidget> createState() => _LoginWidgetState();
 }
+
 class _LoginWidgetState extends State<Login> {
   final FocusNode _passwordFocus = FocusNode();
   attemptLogin(String username, String password, context) async {
     if (username != "" && password != "") {
       // print ('username: '+ enteredUsername + ' password: ' +enteredPassword);
-      if(await verifyUser(username, password, context) == true){
-
-      } else{
+      if (await verifyUser(username, password, context) == true) {
+      } else {
         errorMessage = "Incorrect Username or Password";
         setState(() {});
       }
@@ -73,6 +72,7 @@ class _LoginWidgetState extends State<Login> {
       setState(() {});
     }
   }
+
   final usernameController = TextEditingController();
   final passwordController = TextEditingController();
 
@@ -87,8 +87,9 @@ class _LoginWidgetState extends State<Login> {
   }
 
   @override
-
   Widget build(BuildContext context) {
+    double screenWidth = MediaQuery.of(context).size.width;
+    double screenHeight = MediaQuery.of(context).size.height;
     return Scaffold(
       appBar: AppBar(
         title: Text('LOGIN'),
@@ -97,30 +98,22 @@ class _LoginWidgetState extends State<Login> {
         child: Padding(
           padding: const EdgeInsets.all(30.0),
           child: Container(
-            width: 450,
-            height: 600,
-            decoration: BoxDecoration(
-              color: Color.fromRGBO(255, 250, 255, 1),
-              // boxShadow: [
-              //   BoxShadow(
-              //     color: Colors.deepPurpleAccent,
-              //     spreadRadius: 5,
-              //     blurRadius: 7,
-              //     offset: Offset(3, 3), // changes position of shadow
-              //   ),
-              // ],
-              border: Border.all(),
-              borderRadius: BorderRadius.circular(10.0),
-            ),
-            child: Center(
-              child: Padding(
-                padding: EdgeInsets.all(40.0),
+              width: screenWidth * 0.9, // 90% of screen width
+              height: screenHeight * 0.7, // 70% of screen height
+              decoration: BoxDecoration(
+                color: Color.fromRGBO(255, 250, 255, 1),
+                border: Border.all(),
+                borderRadius: BorderRadius.circular(10.0),
+              ),
+              child: SingleChildScrollView(
+                // To make sure content inside is scrollable
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Padding(
                       padding: const EdgeInsets.fromLTRB(0, 0, 0, 75),
-                      child: Text('Login to your Flushit Account',
+                      child: Text(
+                        'Login to your Flushit Account',
                         style: TextStyle(
                           color: Colors.black87,
                           fontSize: 22,
@@ -139,7 +132,10 @@ class _LoginWidgetState extends State<Login> {
                     ),
                     SizedBox(height: 16),
                     TextField(
-                      onEditingComplete: (){ attemptLogin(usernameController.text, passwordController.text, context);},
+                      onEditingComplete: () {
+                        attemptLogin(usernameController.text,
+                            passwordController.text, context);
+                      },
                       focusNode: _passwordFocus,
                       controller: passwordController,
                       obscureText: true, // Mask the input for passwords
@@ -149,25 +145,27 @@ class _LoginWidgetState extends State<Login> {
                     ),
                     errorMessage.isNotEmpty
                         ? Text(
-                      errorMessage,
-                      style: TextStyle(color: Colors.red),
-                    )
+                            errorMessage,
+                            style: TextStyle(color: Colors.red),
+                          )
                         : SizedBox(), // Empty SizedBox when no error message
                     SizedBox(height: 40),
                     Container(
                       width: 150,
                       child: ElevatedButton(
                         style: ButtonStyle(
-                          backgroundColor:
-                          MaterialStatePropertyAll<Color>(Colors.deepPurple),
-                          overlayColor: MaterialStatePropertyAll<Color>(Colors.deepPurpleAccent),
-
+                          backgroundColor: MaterialStatePropertyAll<Color>(
+                              Colors.deepPurple),
+                          overlayColor: MaterialStatePropertyAll<Color>(
+                              Colors.deepPurpleAccent),
                         ),
                         onPressed: () async {
                           // print('The password is : ' + passwordController.text);
-                          attemptLogin(usernameController.text, passwordController.text, context);
+                          attemptLogin(usernameController.text,
+                              passwordController.text, context);
                         },
-                        child: Text('LOGIN',
+                        child: Text(
+                          'LOGIN',
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: 15,
@@ -178,13 +176,9 @@ class _LoginWidgetState extends State<Login> {
                     ),
                   ],
                 ),
-    )
-            ),
-          ),
+              )),
         ),
-      )
-
+      ),
     );
   }
-
 }
