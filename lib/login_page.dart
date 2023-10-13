@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'secure_storage_service.dart';
+import 'dart:html' as html;
+import 'package:flutter/foundation.dart';
 
 
 
@@ -12,29 +14,30 @@ bool loggedIn = false;
 String errorMessage = "";
 
 Future<bool> verifyUser(String username, String password, BuildContext context) async {
-  final url = Uri.parse('https://flushit.org/login'); // Using IP address and port directly
-  // Replace with your actual URL
-  // Create a Map to hold the data
-  // print('working on logging in at ' + url.toString());
+  final url = Uri.parse('https://flushit.org/login');
   final data = {'username': username, 'password': password};
-  // Encode the data as JSON
   final jsonData = jsonEncode(data);
-  // Set the headers and make the POST request
+
   final response = await http.post(
     url,
     headers: {'Content-Type': 'application/json'},
     body: jsonData,
   );
 
-  // Text('Username: ${userData!['username']}'),
-  // Handle the response as needed
-  // ...
   if (response.statusCode == 200) {
     final jsonResponse = json.decode(response.body);
     final token = jsonResponse['token'];
-    await secureStorageService.writeData('jwt', token);
-    await secureStorageService.writeData('username', username
-    );
+    print(kIsWeb);
+    // Check if the app is running on web or mobile
+    if (kIsWeb) {
+      // Store the JWT in Session Storage for web
+      html.window.sessionStorage['jwt'] = token; // Change to `localStorage` if you want it to persist across sessions
+    } else {
+      // Store the JWT using secureStorageService for mobile
+      await secureStorageService.writeData('jwt', token);
+      await secureStorageService.writeData('username', username);
+    }
+
     Navigator.pushNamed(context, '/home');
     return true;
   } else {
@@ -42,6 +45,11 @@ Future<bool> verifyUser(String username, String password, BuildContext context) 
     print(response.statusCode);
     return false;
   }
+}
+
+
+_cookieStorage(String cookies) {
+  html.window.document.cookie= "jwt=${cookies}; expires=Fri, 14 Oct 2023 12:00:00 UTC";
 }
 
 class Login extends StatefulWidget {

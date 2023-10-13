@@ -5,17 +5,27 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'secure_storage_service.dart';
+import 'dart:html' as html;
+import 'package:flutter/foundation.dart';
 
 String userEmail = "";
 String userName = "";
 
+Future<String?> retrieveJwtToken() async {
+  if (kIsWeb) {
+    // Retrieve the JWT from Session Storage for web
+    return html.window.sessionStorage['jwt']; // Change to `localStorage` if you stored it there
+  } else {
+    // Retrieve the JWT using secureStorageService for mobile
+    return await secureStorageService.readData('jwt');
+  }
+}
 
 Future<Map<String, dynamic>> fetchUserData() async {
   final url = 'https://flushit.org/user-data'; // Replace with your server address
 
   // assuming that you have a way to fetch the token
-  String? token = await secureStorageService.readData(
-      'jwt'); // Replace with your way of getting the token
+  String? token = await retrieveJwtToken(); // Replace with your way of getting the token
 
   final response = await http.get(
     Uri.parse(url),

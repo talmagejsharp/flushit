@@ -9,6 +9,8 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'secure_storage_service.dart';
 import 'notAuthenticated.dart';
 import 'package:mapbox_gl/mapbox_gl.dart';
+import 'dart:html' as html;
+import 'package:flutter/foundation.dart';
 
 Future<bool> newSquat(
     String name, String location, String imageUrl, BuildContext context) async {
@@ -41,12 +43,24 @@ class Home extends StatefulWidget {
   State<StatefulWidget> createState() => _LoadHome();
 
 }
+
+Future<String?> retrieveJwtToken() async {
+  if (kIsWeb) {
+    // Retrieve the JWT from Session Storage for web
+    return html.window.sessionStorage['jwt']; // Change to `localStorage` if you stored it there
+  } else {
+    // Retrieve the JWT using secureStorageService for mobile
+    return await secureStorageService.readData('jwt');
+  }
+}
+
+
 class _LoadHome extends State<Home> {
 
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<String?>(
-    future: secureStorageService.readData('jwt'),
+    future: retrieveJwtToken(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return Center(child: CircularProgressIndicator()); // Display a loading indicator
@@ -437,10 +451,10 @@ class SquatListWidget extends StatelessWidget {
 
 
 Future<List<Squat>> fetchSquats() async {
-  final token = await secureStorageService.readData('jwt');
-    if (token == null) {
-      throw Exception('Token not found');
-    }
+  final token = await retrieveJwtToken();
+  if (token == null) {
+    throw Exception('Token not found');
+  }
   final url = Uri.parse('https://flushit.org/squats'); // Replace with your actual URL
   // Create a Map to hold the data
   // Set the headers and make the POST request
