@@ -6,12 +6,9 @@ class DioService extends Interceptor{
   static final DioService _singleton = DioService._internal();
   final dio = Dio();
 
-
-
   DioService._internal() {
     final cookieJar = CookieJar();
     dio.interceptors.add(CookieManager(cookieJar));
-
   }
 
   factory DioService() {

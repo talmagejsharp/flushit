@@ -37,7 +37,6 @@ Future<bool> verifyUser(
     );
 
     if (response.statusCode == 200) {
-      print("Headers before the request: ${DioService().dio.options.headers}");
 // With Dio and CookieJar, cookies are automatically saved and sent with requests.
 // So, there's no need to manually parse and save the JWT from Set-Cookie header.
 // However, if you want to handle the JWT manually, you can still do it.

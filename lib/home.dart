@@ -463,7 +463,6 @@ Future<bool> accessProtectedRoute() async {
   } catch (e) {
     if (e is DioError) {
       if (e.response?.statusCode == 401) {
-        print("Headers before the request: ${DioService().dio.options.headers}");
         print('Unauthorized - Token not provided or user not logged in');
       } else if (e.response?.statusCode == 403) {
         print('Forbidden - Invalid token');
