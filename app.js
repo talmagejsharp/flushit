@@ -23,8 +23,9 @@ app.use('/protected', authenticateToken, (req, res) => {
 });
 
 function authenticateToken(req, res, next) {
-  // Get the token from the cookie
-  const token = req.cookies.jwt;
+  // Get the token from the request headers
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1]; // Bearer <Token>
 
   if (!token) return res.status(401).json({ message: 'Token not provided' });
 
@@ -35,7 +36,6 @@ function authenticateToken(req, res, next) {
     next(); // Move to the next middleware or route handler
   });
 }
-
 
 app.use(express.static(path.join(__dirname, '/')));
 
@@ -157,7 +157,7 @@ app.post('/login', async (req, res) => {
 
   // Generate a JWT token
   const token = jwt.sign({ userId: user._id }, 'your-secret-key', {expiresIn: '1hr'});
-  print(res.cookie);
+
   res.cookie('jwt', token, { /*httpOnly: true, secure: false,*/ maxAge: 3600000 }); // maxAge is set to 1 hour here
   res.status(200).json({ message: 'Login successful' });
 
