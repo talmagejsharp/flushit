@@ -4,8 +4,6 @@
 <dict>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
-	<key>MGLMapboxAccessToken</key>
-    <string>pk.eyJ1IjoibWlkZ2U1NDMyMSIsImEiOiJjbG5jMHE2czUwaHduMm1vMWwzaDl1ZmpmIn0.F0c9U1e6dg43W-28N_Qelg</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>

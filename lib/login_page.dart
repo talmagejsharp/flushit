@@ -3,8 +3,8 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-//import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-// import 'secure_storage_service.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'secure_storage_service.dart';
 
 
 
@@ -30,20 +30,13 @@ Future<bool> verifyUser(String username, String password, BuildContext context) 
   // Handle the response as needed
   // ...
   if (response.statusCode == 200) {
-    String? rawCookie = response.headers['set-cookie'];
-
-    if (rawCookie != null) {
-      // For simplification, let's say the JWT is the first value in the Set-Cookie header.
-      var jwt = rawCookie.split(';').first;
-
-      //await secureStorageService.writeData('jwt', jwt);
-      //await secureStorageService.writeData('username', username);
-      Navigator.pushNamed(context, '/home');
-      return true;
-    } else {
-      print('No cookie found in response');
-      return false;
-    }
+    final jsonResponse = json.decode(response.body);
+    final token = jsonResponse['token'];
+    await secureStorageService.writeData('jwt', token);
+    await secureStorageService.writeData('username', username
+    );
+    Navigator.pushNamed(context, '/home');
+    return true;
   } else {
     print('Failed to log-in user');
     print(response.statusCode);

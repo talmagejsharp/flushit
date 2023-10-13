@@ -157,9 +157,7 @@ app.post('/login', async (req, res) => {
   // Generate a JWT token
   const token = jwt.sign({ userId: user._id }, 'your-secret-key', {expiresIn: '1hr'});
 
-  res.cookie('jwt', token, { httpOnly: true, secure: false, maxAge: 3600000 }); // maxAge is set to 1 hour here
-  res.status(200).json({ message: 'Login successful' });
-
+  res.status(200).json({ message: 'Login successful', token });
 //  console.log('login successful!');
 });
 // Set up your routes and middleware
