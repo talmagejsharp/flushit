@@ -5,14 +5,12 @@ const bodyParser = require('body-parser'); // Import body-parser
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken'); // Import jsonwebtoken library
 const cors = require('cors'); // Import the cors middleware
-const cookieParser = require('cookie-parser');
 
 
 
 // Create an Express app
 const app = express();
 const path = require('path');
-app.use(cookieParser());
 
 // Use the cors middleware
 app.use(cors({
