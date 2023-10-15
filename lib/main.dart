@@ -1,15 +1,24 @@
+import 'package:flushit/secure_storage_service.dart';
+import 'package:flushit/storage.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'signup_page.dart';
 import 'login_page.dart';
 import 'home.dart';
 import 'package:http/http.dart' as http;
 
+final StorageService storage = kIsWeb ? WebStorage() : SecureStorageService();
+
+
 void main() {
   runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
+
   const MyApp({super.key});
+
+
 
   // This widget is the root of your application.
   @override

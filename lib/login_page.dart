@@ -3,10 +3,10 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'main.dart';
 import 'secure_storage_service.dart';
-import 'dart:html' as html;
 import 'package:flutter/foundation.dart';
+import 'package:flushit/storage.dart';
 
 bool loggedIn = false;
 String errorMessage = "";
@@ -26,17 +26,8 @@ Future<bool> verifyUser(
   if (response.statusCode == 200) {
     final jsonResponse = json.decode(response.body);
     final token = jsonResponse['token'];
-    print(kIsWeb);
     // Check if the app is running on web or mobile
-    if (kIsWeb) {
-      // Store the JWT in Session Storage for web
-      html.window.sessionStorage['jwt'] =
-          token; // Change to `localStorage` if you want it to persist across sessions
-    } else {
-      // Store the JWT using secureStorageService for mobile
-      await secureStorageService.writeData('jwt', token);
-      await secureStorageService.writeData('username', username);
-    }
+    storage.saveToken(token);
 
     Navigator.pushNamed(context, '/home');
     return true;
@@ -45,11 +36,6 @@ Future<bool> verifyUser(
     print(response.statusCode);
     return false;
   }
-}
-
-_cookieStorage(String cookies) {
-  html.window.document.cookie =
-      "jwt=${cookies}; expires=Fri, 14 Oct 2023 12:00:00 UTC";
 }
 
 class Login extends StatefulWidget {
@@ -94,19 +80,18 @@ class _LoginWidgetState extends State<Login> {
       appBar: AppBar(
         title: Text('LOGIN'),
       ),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(30.0),
-          child: Container(
-              width: screenWidth * 0.9, // 90% of screen width
-              height: screenHeight * 0.7, // 70% of screen height
-              decoration: BoxDecoration(
-                color: Color.fromRGBO(255, 250, 255, 1),
-                border: Border.all(),
-                borderRadius: BorderRadius.circular(10.0),
-              ),
-              child: SingleChildScrollView(
-                // To make sure content inside is scrollable
+      body: SingleChildScrollView(
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(30.0),
+            child: Container(
+                width: screenWidth * 0.9, // 90% of screen width
+                height: screenHeight * 0.7, // 70% of screen height
+                decoration: BoxDecoration(
+                  color: Color.fromRGBO(255, 250, 255, 1),
+                  // border: Border.all(),
+                  // borderRadius: BorderRadius.circular(10.0),
+                ),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -175,8 +160,8 @@ class _LoginWidgetState extends State<Login> {
                       ),
                     ),
                   ],
-                ),
-              )),
+                )),
+          ),
         ),
       ),
     );

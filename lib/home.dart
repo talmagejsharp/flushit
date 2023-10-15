@@ -5,12 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import 'package:http/http.dart' as http;
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'secure_storage_service.dart';
+import 'main.dart';
 import 'notAuthenticated.dart';
 import 'package:mapbox_gl/mapbox_gl.dart';
-import 'dart:html' as html;
-import 'package:flutter/foundation.dart';
 
 Future<bool> newSquat(
     String name, String location, String imageUrl, BuildContext context) async {
@@ -44,23 +41,13 @@ class Home extends StatefulWidget {
 
 }
 
-Future<String?> retrieveJwtToken() async {
-  if (kIsWeb) {
-    // Retrieve the JWT from Session Storage for web
-    return html.window.sessionStorage['jwt']; // Change to `localStorage` if you stored it there
-  } else {
-    // Retrieve the JWT using secureStorageService for mobile
-    return await secureStorageService.readData('jwt');
-  }
-}
-
 
 class _LoadHome extends State<Home> {
 
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<String?>(
-    future: retrieveJwtToken(),
+    future: storage.readToken(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return Center(child: CircularProgressIndicator()); // Display a loading indicator
@@ -205,125 +192,112 @@ class _NewSquatState extends State<NewSquat> {
   int numberOfLikes = 0;
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(30.0),
-      child: Container(
-        width: 450,
-        height: 600,
-        decoration: BoxDecoration(
-          // color: Color.fromRGBO(255, 250, 255, 1),
-          // boxShadow: [
-          //   BoxShadow(
-          //     color: Colors.deepPurpleAccent,
-          //     spreadRadius: 5,
-          //     blurRadius: 7,
-          //     offset: Offset(3, 3), // changes position of shadow
-          //   ),
-          // ],
-          border: Border.all(
-            color: Colors.black26,
-            width: 2,
-          ),
-          borderRadius: BorderRadius.circular(10.0),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(30.0),
-          child: Column(
-            children: [
-              Text(
-                'Create your new Squat ',
-                style: TextStyle(
-                  fontSize: 18,
-                ),
-              ),
-              Expanded(
-                  child: IconButton(
-                icon: Icon(
-                  Icons.add_box_rounded,
-                  size: 50,
-                  color: Colors.black26,
-                ),
-                onPressed: () {},
-                style: ButtonStyle(
-                  overlayColor: MaterialStateProperty.resolveWith<Color>(
-                    (Set<MaterialState> states) {
-                      // Remove the overlay color for hovered state
-                      if (states.contains(MaterialState.hovered)) {
-                        return Colors.transparent;
-                      }
-                      return Colors
-                          .transparent; // Use the default overlay color for other states
-                    },
+    return SingleChildScrollView(
+      child: Padding(
+        padding: const EdgeInsets.all(30.0),
+        child: Container(
+          width: 450,
+          height: 600,
+
+          child: Padding(
+            padding: const EdgeInsets.all(30.0),
+            child: Column(
+              children: [
+                Text(
+                  'Create your new Squat ',
+                  style: TextStyle(
+                    fontSize: 18,
                   ),
                 ),
-              )),
-              TextField(
-                onChanged: (String value) async {
-                  enteredName = value;
-                },
-                decoration: InputDecoration(
-                  labelText: 'Name',
-                ),
-              ),
-              // SizedBox(height: 16),
-              TextField(
-                onChanged: (String value) async {
-                  enteredLocation = value;
-                },
-                decoration: InputDecoration(
-                  labelText: 'Location',
-                ),
-              ),
-              TextField(
-                onChanged: (String value) async {
-                  enteredImageUrl = value;
-                },
-                decoration: InputDecoration(
-                  labelText: 'Image URL',
-                ),
-              ),
-              errorMessage.isNotEmpty
-                  ? Text(
-                      errorMessage,
-                      style: TextStyle(color: Colors.red),
-                    )
-                  : SizedBox(), // Empty SizedBox when no error message
-              Expanded(child: SizedBox()),
-              Padding(
-                padding: const EdgeInsets.all(10.0),
-                child: ElevatedButton(
+                Expanded(
+                    child: IconButton(
+                  icon: Icon(
+                    Icons.add_box_rounded,
+                    size: 50,
+                    color: Colors.black26,
+                  ),
+                  onPressed: () {},
                   style: ButtonStyle(
-                    backgroundColor:
-                        MaterialStatePropertyAll<Color>(Colors.deepPurple),
-                    overlayColor: MaterialStatePropertyAll<Color>(
-                        Colors.deepPurpleAccent),
+                    overlayColor: MaterialStateProperty.resolveWith<Color>(
+                      (Set<MaterialState> states) {
+                        // Remove the overlay color for hovered state
+                        if (states.contains(MaterialState.hovered)) {
+                          return Colors.transparent;
+                        }
+                        return Colors
+                            .transparent; // Use the default overlay color for other states
+                      },
+                    ),
                   ),
-                  onPressed: () {
-                    if (enteredName != '' &&
-                        enteredImageUrl != '' &&
-                        enteredLocation != '') {
-                      print(enteredName + enteredLocation + enteredImageUrl);
-                      newSquat(enteredName, enteredLocation, enteredImageUrl,
-                          context);
-                    } else {
-                      errorMessage =
-                          'Please enter a name, location and url for your squat';
-                      setState(() {});
-                    }
+                )),
+                TextField(
+                  onChanged: (String value) async {
+                    enteredName = value;
                   },
-                  child: Text(
-                    'CREATE',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 15,
-                      letterSpacing: 2.0,
+                  decoration: InputDecoration(
+                    labelText: 'Name',
+                  ),
+                ),
+                // SizedBox(height: 16),
+                TextField(
+                  onChanged: (String value) async {
+                    enteredLocation = value;
+                  },
+                  decoration: InputDecoration(
+                    labelText: 'Location',
+                  ),
+                ),
+                TextField(
+                  onChanged: (String value) async {
+                    enteredImageUrl = value;
+                  },
+                  decoration: InputDecoration(
+                    labelText: 'Image URL',
+                  ),
+                ),
+                errorMessage.isNotEmpty
+                    ? Text(
+                        errorMessage,
+                        style: TextStyle(color: Colors.red),
+                      )
+                    : SizedBox(), // Empty SizedBox when no error message
+                Expanded(child: SizedBox()),
+                Padding(
+                  padding: const EdgeInsets.all(10.0),
+                  child: ElevatedButton(
+                    style: ButtonStyle(
+                      backgroundColor:
+                          MaterialStatePropertyAll<Color>(Colors.deepPurple),
+                      overlayColor: MaterialStatePropertyAll<Color>(
+                          Colors.deepPurpleAccent),
+                    ),
+                    onPressed: () {
+                      if (enteredName != '' &&
+                          enteredImageUrl != '' &&
+                          enteredLocation != '') {
+                        print(enteredName + enteredLocation + enteredImageUrl);
+                        newSquat(enteredName, enteredLocation, enteredImageUrl,
+                            context);
+                      } else {
+                        errorMessage =
+                            'Please enter a name, location and url for your squat';
+                        setState(() {});
+                      }
+                    },
+                    child: Text(
+                      'CREATE',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 15,
+                        letterSpacing: 2.0,
+                      ),
                     ),
                   ),
                 ),
-              ),
-              Text('lets see if this will even work shall we'),
-              Text('yes, we shall'),
-            ],
+                Text('lets see if this will even work shall we'),
+                Text('yes, we shall'),
+              ],
+            ),
           ),
         ),
       ),
@@ -345,7 +319,7 @@ class _NewSquatView extends State<SquatView> {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return Center(child: CircularProgressIndicator()); // Display a loading indicator
         } else if (snapshot.hasError) {
-          return Text('Error: ${snapshot.error}');
+          return LoggedOut();
         } else if (snapshot.hasData) {
           return SquatListWidget(
               squats: snapshot.data!); // Pass the actual data
@@ -451,7 +425,7 @@ class SquatListWidget extends StatelessWidget {
 
 
 Future<List<Squat>> fetchSquats() async {
-  final token = await retrieveJwtToken();
+  final token = await storage.readToken();
   if (token == null) {
     throw Exception('Token not found');
   }
@@ -461,7 +435,6 @@ Future<List<Squat>> fetchSquats() async {
   final response = await http.get(url, headers: {
     'Authorization': 'Bearer $token',
   });
-  print('attempting to retrieve squats');
 
   // Handle the response as needed
   // ...
@@ -469,8 +442,9 @@ Future<List<Squat>> fetchSquats() async {
     final List<dynamic> jsonData = json.decode(response.body);
     return jsonData.map((data) => Squat.fromJson(data)).toList();
   } else {
-    print(response.statusCode);
+
     throw Exception('Failed to load squats');
+
   }
 }
 

@@ -1,31 +1,24 @@
 import 'dart:convert';
 import 'package:flushit/customButtons.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flushit/secure_storage_service.dart';
+import 'package:flushit/storage.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'secure_storage_service.dart';
-import 'dart:html' as html;
+import 'main.dart';
+import 'notAuthenticated.dart';
 import 'package:flutter/foundation.dart';
 
 String userEmail = "";
 String userName = "";
 
-Future<String?> retrieveJwtToken() async {
-  if (kIsWeb) {
-    // Retrieve the JWT from Session Storage for web
-    return html.window.sessionStorage['jwt']; // Change to `localStorage` if you stored it there
-  } else {
-    // Retrieve the JWT using secureStorageService for mobile
-    return await secureStorageService.readData('jwt');
-  }
-}
 
 Future<Map<String, dynamic>> fetchUserData() async {
+  String? token;
   final url = 'https://flushit.org/user-data'; // Replace with your server address
 
   // assuming that you have a way to fetch the token
-  String? token = await retrieveJwtToken(); // Replace with your way of getting the token
+  token = await storage.readToken();
+  // Replace with your way of getting the token
 
   final response = await http.get(
     Uri.parse(url),
@@ -76,7 +69,7 @@ class _UserInfoPageState extends State<UserInfo> {
     }
 
     if (userData == null) {
-      return Center(child: Text('No user data available'));
+      return LoggedOut();
     }
 
     return Scaffold(

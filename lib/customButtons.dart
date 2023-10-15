@@ -1,5 +1,9 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'secure_storage_service.dart';
+import 'package:flushit/secure_storage_service.dart';
+import 'main.dart';
+import 'storage.dart';
+
 
 class LogoutButton extends StatelessWidget {
 
@@ -13,7 +17,7 @@ class LogoutButton extends StatelessWidget {
           MaterialStatePropertyAll<Color>(Colors.deepPurpleAccent),
         ),
         onPressed: () {
-          secureStorageService.clearAllData();
+          storage.clearAllData();
           Navigator.pushNamed(context, '/');
         },
         child: Text(
