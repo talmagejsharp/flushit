@@ -142,7 +142,9 @@ class _HomeState extends State<LoggedIn> {
                 ],
               ),
             ),
-            body: TabBarView(children: [
+            body: TabBarView(
+                physics: NeverScrollableScrollPhysics(),
+                children: [
               Center(
                   child: Column(
                 children: [
