@@ -1,8 +1,0 @@
-version: "Apple Swift version 5.8.1 (swiftlang-5.8.0.124.5 clang-1403.0.22.11.100)"
-options: "a6819a1dc334e4777be20aee1b9caacf1f7256857be697e9beee76260be5f194"
-build_start_time: [1693019860, 365873000]
-build_end_time: [1693019868, 338602000]
-inputs:
-  "/Users/talmagesharp/Program Files/Programs/flushit/macos/Flutter/GeneratedPluginRegistrant.swift": [1693019845, 869939902]
-  "/Users/talmagesharp/Program Files/Programs/flushit/macos/Runner/AppDelegate.swift": [1689213722, 0]
-  "/Users/talmagesharp/Program Files/Programs/flushit/macos/Runner/MainFlutterWindow.swift": [1689213722, 0]
