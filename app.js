@@ -61,16 +61,27 @@ const User = mongoose.model('User', {
 
 });
 
-const Squat = mongoose.model('Squat', {
- name: String,
- location: String,
- likes: Number,
- image: String,
- /*creator: {
-    type: Schema.Types.ObjectId,
-    ref: 'User'
- }*/
+const SquatSchema = new mongoose.Schema({
+  name: String,
+  location: String,
+  likes: Number,
+  image: String,
+  coordinates: {
+    type: {
+      type: String,
+      enum: ['Point'], // 'location.type' must be 'Point'
+      required: true
+    },
+    coordinates: {
+      type: [Number],  // [longitude, latitude]
+      required: true
+    }
+  }
 });
+
+SquatSchema.index({ coordinates: '2dsphere' });
+
+const Squat = mongoose.model('Squat', SquatSchema);
 
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, '/', 'build/web/index.html'));
