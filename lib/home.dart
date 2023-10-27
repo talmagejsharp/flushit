@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:math';
+import 'package:flushit/showSquat.dart';
 import 'package:flushit/userInfo.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -7,7 +8,10 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'main.dart';
 import 'notAuthenticated.dart';
+import 'Squat.dart';
 import 'package:mapbox_gl/mapbox_gl.dart';
+import 'package:latlong2/latlong.dart' as latlong2;
+
 
 Future<bool> newSquat(
     String name, String location, String imageUrl, BuildContext context) async {
@@ -87,7 +91,22 @@ class LoggedIn extends StatefulWidget {
 }
 
 class _HomeState extends State<LoggedIn> {
-  late MapboxMapController mapController;
+  MapboxMapController? mapController;
+  List<Squat> squats = [];
+  Squat talmage = Squat(
+      name: "Talmage",
+      location: "At rat house",
+      likes: 4,
+      image: "wala",
+      coordinates: latlong2.LatLng(21.651938, -157.927192)
+  );
+  // squats.add(talmage);
+  @override
+  void initState() {
+    squats.add(talmage);
+    super.initState();
+  }
+
 
 
   @override
@@ -146,11 +165,7 @@ class _HomeState extends State<LoggedIn> {
                 physics: NeverScrollableScrollPhysics(),
                 children: [
               Center(
-                  child: Column(
-                children: [
-                  SquatView(),
-                ],
-              )),
+                  child: SquatView()),
               Center(child: NewSquat()),
               Center(
                   child: UserInfo()),
@@ -159,10 +174,9 @@ class _HomeState extends State<LoggedIn> {
                 width: 300,
                 child: MapboxMap(
                   accessToken: 'pk.eyJ1IjoibWlkZ2U1NDMyMSIsImEiOiJjbG5jMHE2czUwaHduMm1vMWwzaDl1ZmpmIn0.F0c9U1e6dg43W-28N_Qelg',
-                  onMapCreated: (controller) {
-                    mapController = controller;
-                  },
+                  onMapCreated: _onMapCreated,
                   onMapLongClick: _LongClick,
+                  onStyleLoadedCallback: _addSquatSymbols,
                   initialCameraPosition: const CameraPosition(
                     target: LatLng(21.64, -157.92), // This is just a starting point, you can adjust as necessary
                     zoom: 11.0,
@@ -179,6 +193,35 @@ class _HomeState extends State<LoggedIn> {
 
     }*/
   }
+  void _onMapCreated(MapboxMapController controller) {
+    mapController = controller;
+    // _addSquatSymbols();
+  }
+
+  void _addSquatSymbols() {
+    print("There are this many squats:");
+    print(squats.length);
+
+    for (var squat in squats) {
+      print("This is the latitude");
+      print(squat.coordinates!.latitude);
+      if(mapController == null){
+        print("There is no mapController!");
+      }
+      mapController?.addSymbol(SymbolOptions(
+        geometry: LatLng(
+          squat.coordinates!.latitude,
+          squat.coordinates!.longitude, // longitude
+        ),
+        iconImage: 'airport-15', // This assumes you've added a custom marker icon, else you can use 'airport-15' for example
+        iconSize: 1.0,
+        textField: squat.name,
+        textSize: 12.0,
+        textOffset: Offset(0, 2), // adjust offset as needed
+      ));
+    }
+  }
+
 }
 
 class NewSquat extends StatefulWidget {
@@ -323,7 +366,7 @@ class _NewSquatView extends State<SquatView> {
         } else if (snapshot.hasError) {
           return LoggedOut();
         } else if (snapshot.hasData) {
-          return SquatListWidget(
+          return SquatListView(
               squats: snapshot.data!); // Pass the actual data
         } else {
           return Text('No data available.');
@@ -333,40 +376,61 @@ class _NewSquatView extends State<SquatView> {
   }
 }
 
-class SquatListWidget extends StatelessWidget {
+class SquatListView extends StatefulWidget {
   final List<Squat> squats;
 
-  SquatListWidget({required this.squats});
+  SquatListView({required this.squats});
+
+  @override
+  State<StatefulWidget> createState() => _SquatListWidget(squats: squats);
+}
+
+class _SquatListWidget extends State<SquatListView> {
+
+  late final List<Squat> squats;
+  Squat? selectedSquat;
+  _SquatListWidget({required this.squats});
+
+  // SquatListWidget({required this.squats});
 
   @override
   Widget build(BuildContext context) {
+    print(squats.length);
+    if(selectedSquat != null){
+      print(selectedSquat);
+      return ShowSquat(squat: selectedSquat, onBack: () {
+        setState(() {
+          selectedSquat = null;
+        });
+      });
+    }
     double screenWidth = MediaQuery.of(context).size.width;
     int columnsCount = (screenWidth ~/200) as int;
-    return Expanded(
-      child: Padding(
-        padding: const EdgeInsets.all(10.0),
-        child: GridView.builder(
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: columnsCount, // Adjust the number of columns here
-            crossAxisSpacing: 8,
-            mainAxisSpacing: 8,
-          ),
-          itemCount: squats.length,
-          itemBuilder: (context, index) {
-            final squat = squats[index];
-            // int likes = squat.likes;
-            String textLikes;
-            return Container(
-              // decoration: BoxDecoration(
-              //   color: Color.fromRGBO(255, 250, 255, 1),
-              //   border: Border.all(
-              //     color: Colors.black26,
-              //     width: 2,
-              //   ),
-              //   borderRadius: BorderRadius.circular(10.0),
-              // ),
+
+    return Padding(
+      padding: const EdgeInsets.all(10.0),
+      child: GridView.builder(
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: columnsCount, // Adjust the number of columns here
+          crossAxisSpacing: 8,
+          mainAxisSpacing: 8,
+        ),
+        itemCount: squats.length,
+        itemBuilder: (context, index) {
+          final squat = squats[index];
+          // int likes = squat.likes;
+          String textLikes;
+          return InkWell(
+            onTap: () {
+              // Handle the tap here
+              setState(() {
+                selectedSquat = squat;
+              });
+            },
+            child: Container(
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
+                // mainAxisSize: MainAxisSize.min,
+                // crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   AspectRatio(
                     aspectRatio: 16 / 9,
@@ -392,7 +456,7 @@ class SquatListWidget extends StatelessWidget {
                               squat.name,
                               style: TextStyle(
                                 fontWeight: FontWeight.bold,
-                                fontSize: 18,
+                                fontSize: 14,
                               ),
                             ),
                             SizedBox(height: 4),
@@ -417,9 +481,9 @@ class SquatListWidget extends StatelessWidget {
                   ),
                 ],
               ),
-            );
-          },
-        ),
+            ),
+          );
+        },
       ),
     );
   }
@@ -470,29 +534,6 @@ Future<bool> accessProtectedRoute(String token) async {
   } else {
     print('Something went wrong');
     return false;
-  }
-}
-
-class Squat {
-  final String name;
-  final String location;
-  final int likes;
-  final String image;
-
-  Squat({
-    required this.name,
-    required this.location,
-    required this.likes,
-    required this.image,
-  });
-
-  factory Squat.fromJson(Map<String, dynamic> json) {
-    return Squat(
-      name: json['name'],
-      location: json['location'],
-      likes: json['likes'],
-      image: json['image'],
-    );
   }
 }
 

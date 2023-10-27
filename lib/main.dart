@@ -111,7 +111,6 @@ class _MyHomePageState extends State<MyHomePage> {
             ElevatedButton(
                 onPressed: () {
                   Navigator.pushNamed(context, '/signup');
-                  print('SIGN UP PRESSED');
                 },
                 style: ButtonStyle(
                   backgroundColor:
@@ -138,7 +137,6 @@ class _MyHomePageState extends State<MyHomePage> {
             OutlinedButton(
                 onPressed: () {
                   Navigator.pushNamed(context, '/login');
-                  print('LOG IN PRESSED');
                 },
                 child: Container(
                   width: 150,
