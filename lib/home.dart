@@ -30,11 +30,8 @@ Future<bool> newSquat(
   // Handle the response as needed
   // ...
   if (response.statusCode == 200 || response.statusCode == 201) {
-    print('Squat created successfully');
     return true;
   } else {
-    print('Failed to create squat');
-    print(response.statusCode);
     return false;
   }
 }
@@ -199,15 +196,7 @@ class _HomeState extends State<LoggedIn> {
   }
 
   void _addSquatSymbols() {
-    print("There are this many squats:");
-    print(squats.length);
-
     for (var squat in squats) {
-      print("This is the latitude");
-      print(squat.coordinates!.latitude);
-      if(mapController == null){
-        print("There is no mapController!");
-      }
       mapController?.addSymbol(SymbolOptions(
         geometry: LatLng(
           squat.coordinates!.latitude,
@@ -320,7 +309,6 @@ class _NewSquatState extends State<NewSquat> {
                       if (enteredName != '' &&
                           enteredImageUrl != '' &&
                           enteredLocation != '') {
-                        print(enteredName + enteredLocation + enteredImageUrl);
                         newSquat(enteredName, enteredLocation, enteredImageUrl,
                             context);
                       } else {
@@ -395,9 +383,7 @@ class _SquatListWidget extends State<SquatListView> {
 
   @override
   Widget build(BuildContext context) {
-    print(squats.length);
     if(selectedSquat != null){
-      print(selectedSquat);
       return ShowSquat(squat: selectedSquat, onBack: () {
         setState(() {
           selectedSquat = null;
@@ -515,7 +501,6 @@ Future<List<Squat>> fetchSquats() async {
 }
 
 Future<bool> accessProtectedRoute(String token) async {
-  print("Attempting to accessProtectedRoute using token " + token);
   final url = 'https://flushit.org/protected'; // replace with your actual URL
   final response = await http.get(
     Uri.parse(url),
@@ -523,16 +508,12 @@ Future<bool> accessProtectedRoute(String token) async {
   );
 
   if (response.statusCode == 200) {
-    print('Successfully accessed protected route!');
     return true;
   } else if (response.statusCode == 401) {
-    print('Unauthorized - Token not provided or user not logged in');
     return false;
   } else if (response.statusCode == 403) {
-    print('Forbidden - Invalid token');
     return false;
   } else {
-    print('Something went wrong');
     return false;
   }
 }
@@ -597,11 +578,8 @@ Future<bool> like(String id) async {
   // Handle the response as needed
   // ...
   if (response.statusCode == 200 || response.statusCode == 201) {
-    print('Squat created successfully');
     return true;
   } else {
-    print('Failed to create squat');
-    print(response.statusCode);
     return false;
   }
 }

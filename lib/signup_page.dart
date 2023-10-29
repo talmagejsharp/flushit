@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flushit/userInfo.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'login_page.dart';
@@ -6,7 +7,6 @@ import 'login_page.dart';
 Future<void> registerUser(String username, String email,  String password, BuildContext context) async {
   final url = Uri.parse('https://flushit.org/register'); // Replace with your actual URL
   // Create a Map to hold the data
-  print('working on signing in at' + url.path);
   final data = {'username': username, 'email': email, 'password': password};
   // Encode the data as JSON
   final jsonData = jsonEncode(data);
@@ -20,24 +20,9 @@ Future<void> registerUser(String username, String email,  String password, Build
   // Handle the response as needed
   // ...
   if (response.statusCode == 200 || response.statusCode == 201) {
-    print('User registered successfully');
     verifyUser(username, password, context);
   } else {
-    print('Failed to register user');
-    print(response.statusCode);
-  }
-}
 
-Future<bool> isAvaliable(String username) async {
-  print('checking to see if '+ username + ' is avaliable');
-  final response = await http.get(
-      Uri.parse('https://flushit.org/check_username/$username'));
-  print(response.statusCode);
-
-  if (response.statusCode == 200) {
-    return true;
-  } else {
-    return false;
   }
 }
 
@@ -51,8 +36,6 @@ class SignUp extends StatefulWidget {
 class _SignupWidgetState extends State<SignUp> {
   signUp(String username, String email, String password, BuildContext context) async {
     if (username.isNotEmpty && password.isNotEmpty && email.isNotEmpty) {
-      print('Email: '+ email + ' username: ' + username + ' password: '+ password);
-      print(password.length);
       if(username.length < 5){
         errorMessage = "Minimum length of username is 5 characters";
         setState(() {});
@@ -60,11 +43,15 @@ class _SignupWidgetState extends State<SignUp> {
         errorMessage = "Minimum length of password is 8 characters";
         setState(() {});
       } else {
-        bool isUsernameAvailable = await isAvaliable(username);
-        if (isUsernameAvailable) {
+        bool usernameAvailable = await isUsernameAvailable(username);
+        bool emailAvailable = await isEmailAvailable(email);
+        if (usernameAvailable && emailAvailable) {
           registerUser(username, email, password, context);
-        } else {
+        } else if(!usernameAvailable){
           errorMessage = "Username already taken, please log in";
+          setState(() {});
+        } else {
+          errorMessage = "Email already taken, please log in";
           setState(() {});
         }
       }
@@ -108,16 +95,6 @@ class _SignupWidgetState extends State<SignUp> {
             height: 600,
             decoration: BoxDecoration(
               color: Color.fromRGBO(255, 250, 255, 1),
-              // boxShadow: [
-              //   BoxShadow(
-              //     color: Colors.deepPurpleAccent,
-              //     spreadRadius: 5,
-              //     blurRadius: 7,
-              //     offset: Offset(3, 3), // changes position of shadow
-              //   ),
-              // ],
-              // border: Border.all(),
-              // borderRadius: BorderRadius.circular(10.0),
             ),
             // color: Colors.deepPurpleAccent,
             child: Padding(

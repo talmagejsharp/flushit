@@ -56,9 +56,9 @@ const User = mongoose.model('User', {
  username: String,
  password: String,
  email: String,
-// profilePicture: Image,
-// email: String,
-
+ role: String,
+ rank: String,
+ profilePicture: String,
 });
 
 const SquatSchema = new mongoose.Schema({
@@ -105,9 +105,37 @@ app.get('/user-data', authenticateToken, async (req, res) => {
         return res.status(404).json({ message: 'User not found'});
     }
 
-    return res.json({email: user.email, username: user.username });
+    return res.json({email: user.email, username: user.username, rank: user.rank, profilePicture: user.profilePicture });
     } catch (error) {
         return res.status(500).json({ message: 'server error'});
+    }
+});
+
+app.post('/update-user', authenticateToken, async (req, res) => {
+    try {
+        const userId = req.user.userId;
+        // Extract data from request body
+        const { email, username, profilePicture} = req.body;
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+        // Update user's details
+        if (email) {
+            user.email = email;
+        }
+        if (username) {
+            user.username = username;
+        }
+        if (profilePicture) {
+        console.log("There is an image and that image is "+ profilePicture);
+            user.profilePicture = profilePicture;
+        }
+        await user.save(); // Save changes to the database
+        return res.json({ message: 'User data updated successfully' });
+    } catch (error) {
+        console.error('Error updating user:', error);
+        return res.status(500).json({ message: 'server error' });
     }
 });
 
@@ -115,10 +143,23 @@ app.get('/check_username/:username', async (req, res) => {
   const { username } = req.params;
   const user = await db.collection('users').findOne({ username });
   if (user) {
+   console.log("username is taken");
     res.status(409).send('taken');
   } else {
+  console.log("username: " + username + " is available");
     res.status(200).send('available');
+  }
+});
 
+app.get('/check_email/:email', async (req, res) => {
+  const { email } = req.params;
+  const user = await db.collection('users').findOne({ email });
+  if (user) {
+    console.log("email is taken");
+    res.status(409).send('taken');
+  } else {
+    console.log("email is not taken");
+    res.status(200).send('available');
   }
 });
 
@@ -136,15 +177,11 @@ app.post('/register', async (req, res) => {
 //  console.log('attempting to post the username and password');
 //  console.log(req);
   const { username, email, password,  } = req.body;
-
   // Hash the password before saving it
   const hashedPassword = await bcrypt.hash(password, 10);
-
   // Create a new user record in the database
-
-  const newUser = new User({ username, email, password: hashedPassword });
+  const newUser = new User({ username, email, password: hashedPassword, rank: 'Tenderfoot', role: 'user' });
   await newUser.save();
-
   res.status(201).json({ message: 'User registered successfully' });
 });
 
