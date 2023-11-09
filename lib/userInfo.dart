@@ -1,15 +1,15 @@
 import 'dart:convert';
 import 'package:flushit/customButtons.dart';
-import 'package:flushit/secure_storage_service.dart';
-import 'package:flushit/storage.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'main.dart';
 import 'notAuthenticated.dart';
-import 'package:flutter/foundation.dart';
 
 String userEmail = "";
 String userName = "";
+bool loaded = false;
+bool isLoading = true;
+Map<String, dynamic>? userData;
 
 Future<bool> isUsernameAvailable(String username) async {
   final response =
@@ -48,7 +48,6 @@ Future<bool> updateUser({ String? updatedUsername, String? updatedEmail, String?
     data['email'] = updatedEmail;
   }
   if (updatedProfilePicture != null) {
-    print("This is the updated picture" +updatedProfilePicture);
     data['profilePicture'] = updatedProfilePicture;
   }
 
@@ -99,8 +98,7 @@ class UserInfo extends StatefulWidget {
 }
 
 class _UserInfoPageState extends State<UserInfo> {
-  Map<String, dynamic>? userData;
-  bool isLoading = true;
+
 
   bool isEditing = false;
   final usernameController = TextEditingController();
@@ -116,14 +114,17 @@ class _UserInfoPageState extends State<UserInfo> {
 
   Future<void> _loadUserData() async {
     try {
-      final data = await fetchUserData();
-      setState(() {
-        userData = data;
-        isLoading = false;
-        usernameController.text = userData?['username'] ?? '';
-        emailController.text = userData?['email'] ?? '';
-        profilePictureController.text = userData?['profilePicture'] ?? '';
-      });
+      if(!loaded) {
+        final data = await fetchUserData();
+        setState(() {
+          userData = data;
+          isLoading = false;
+          usernameController.text = userData?['username'] ?? '';
+          emailController.text = userData?['email'] ?? '';
+          profilePictureController.text = userData?['profilePicture'] ?? '';
+        });
+        loaded = true;
+      }
     } catch (error) {
       // Handle error
       setState(() {
@@ -185,9 +186,11 @@ class _UserInfoPageState extends State<UserInfo> {
                     else
                       Text('Username: ${userData!['username']}',
                           style: TextStyle(fontSize: 20)),
+                    if(!isEditing)
                     IconButton(
                         onPressed: () {
                           setState(() {
+                            loaded = false;
                             isEditing = true;
                           });
                         },
@@ -272,6 +275,14 @@ class _UserInfoPageState extends State<UserInfo> {
                         // Handle backend update
                         if (success) {
                           setState(() {
+                            final snackBar = SnackBar(
+                              content: Text('Account Updated Successfully'),
+                              duration: Duration(seconds: 2),  // Duration to show the SnackBar
+                              // Optionally add an action for more user interaction
+                            );
+
+                            // Display the snackbar
+                            ScaffoldMessenger.of(context).showSnackBar(snackBar);
                             if (updatedUsername != null) userData!['username'] = updatedUsername;
                             if (updatedEmail != null) userData!['email'] = updatedEmail;
                              if (updatedProfilePicture != null) userData!['profilePicture'] = updatedProfilePicture;

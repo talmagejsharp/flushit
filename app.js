@@ -36,6 +36,8 @@ function authenticateToken(req, res, next) {
   });
 }
 
+
+
 app.use(express.static(path.join(__dirname, '/')));
 
 app.use(bodyParser.json()); // Parse JSON requests
@@ -62,37 +64,54 @@ const User = mongoose.model('User', {
 });
 
 const SquatSchema = new mongoose.Schema({
+  owner: {
+      type: mongoose.Schema.Types.ObjectId, // Use ObjectId data type from mongoose
+      ref: 'User', // This should match the name of your User model
+      required: false // This enforces that every squat must have an owner
+    },
   name: String,
   location: String,
-  likes: Number,
+  likes: {
+      type: Number,
+      default: 0 // It's good to have a default value for likes
+    },
   image: String,
   coordinates: {
     type: {
       type: String,
       enum: ['Point'], // 'location.type' must be 'Point'
-      required: true
+//      default: 'Point' // Default can be set if you always want it to be 'Point'
     },
     coordinates: {
-      type: [Number],  // [longitude, latitude]
-      required: true
+      type: [Number], // [longitude, latitude]
+      index: '2dsphere',
+       required: false// You can define the index here for geospatial queries
     }
   }
 });
 
-SquatSchema.index({ coordinates: '2dsphere' });
+// Alternatively, you can set the index like this, outside the schema definition
+// SquatSchema.index({ 'coordinates.coordinates': '2dsphere' });
 
 const Squat = mongoose.model('Squat', SquatSchema);
+
 
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, '/', 'build/web/index.html'));
 });
 
-app.post('/new_squat', async(req, res) => {
- const { name, location, image, likes } = req.body;
- const newSquat = new Squat({ name, location, image, likes});
-   await newSquat.save();
-
-   res.status(201).json({ message: 'Squat created successfully' });
+app.post('/new_squat', authenticateToken, async(req, res) => {
+    const { name, location, image, likes } = req.body;
+    const ownerId = req.user.userId; // Assuming the user ID is available on req.user._id
+    const newSquat = new Squat({
+     owner: ownerId,
+     name,
+     location,
+     image,
+     likes
+    });
+    await newSquat.save();
+    res.status(201).json({ message: 'Squat created successfully' });
 
 });
 
@@ -111,6 +130,46 @@ app.get('/user-data', authenticateToken, async (req, res) => {
     }
 });
 
+app.post('/update-squat', authenticateToken, async (req, res) => {
+    try {
+        console.log("received an update request");
+        const squatId = req.body.squatId; // Assuming you pass the squat's ID in the request body.
+        // Extract data from request body
+        const { name, location, likes, image, coordinates } = req.body;
+        const squat = await Squat.findById(squatId);
+        if (!squat) {
+            return res.status(404).json({ message: 'Squat not found' });
+        }
+        if(squat.ownerId != req.user.id){
+            return res.status(403).json({message: 'You are not the owner of this squat'});
+        }
+        // Update squat's details
+        if (name) {
+            squat.name = name;
+        }
+        if (location) {
+            squat.location = location;
+        }
+        if (likes) {
+            squat.likes = likes; // Note: This directly sets the likes. You might want to increment instead, depending on your use case.
+        }
+        if (image) {
+            squat.image = image;
+        }
+        if (coordinates) {
+            // Assuming you're passing coordinates as an object like: { type: 'Point', coordinates: [longitude, latitude] }
+            squat.coordinates = coordinates;
+        }
+        await squat.save(); // Save changes to the database
+        return res.json({ message: 'Squat data updated successfully' });
+
+    } catch (error) {
+        console.error('Error updating squat:', error);
+        return res.status(500).json({ message: error.message });
+    }
+});
+
+
 app.post('/update-user', authenticateToken, async (req, res) => {
     try {
         const userId = req.user.userId;
@@ -128,7 +187,6 @@ app.post('/update-user', authenticateToken, async (req, res) => {
             user.username = username;
         }
         if (profilePicture) {
-        console.log("There is an image and that image is "+ profilePicture);
             user.profilePicture = profilePicture;
         }
         await user.save(); // Save changes to the database
@@ -165,10 +223,22 @@ app.get('/check_email/:email', async (req, res) => {
 
 app.get('/squats', authenticateToken, async (req, res) => {
   try {
-//  log('Looking for squats in the database');
-    const squats = await Squat.find(); // Fetch all squats from the database
-    res.json(squats); // Return squats as JSON response
+    // Fetch all squats from the database
+    const squats = await Squat.find().lean(); // Using .lean() for better performance as we just need plain JavaScript objects
+    console.log('User ID:', req.user.userId);
+    // Add an 'isOwner' property to each squat
+    const squatsWithOwnership = squats.map(squat => {
+      console.log(`Logged in user ID: ${req.user.userId}`);
+      console.log(`Squat owner ID: ${squat.owner}`);
+      const isOwner = squat.owner ? req.user.userId === squat.owner.toString() : false;
+      console.log(`Squat ID: ${squat._id}, Owner: ${squat.owner}, isOwner: ${isOwner}`); // This will confirm the boolean value of isOwner
+      return { ...squat, isOwner };
+    });
+
+
+    res.json(squatsWithOwnership); // Return the modified squats as JSON response
   } catch (error) {
+    console.error('Error fetching squats:', error);
     res.status(500).json({ error: 'Error fetching squats' });
   }
 });
@@ -203,7 +273,7 @@ app.post('/login', async (req, res) => {
   }
 
   // Generate a JWT token
-  const token = jwt.sign({ userId: user._id }, 'your-secret-key', {expiresIn: '1hr'});
+  const token = jwt.sign({ userId: user._id }, 'your-secret-key', {expiresIn: '2 weeks'});
 
   res.status(200).json({ message: 'Login successful', token });
 //  console.log('login successful!');

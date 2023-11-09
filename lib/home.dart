@@ -9,55 +9,79 @@ import 'package:http/http.dart' as http;
 import 'main.dart';
 import 'notAuthenticated.dart';
 import 'Squat.dart';
+import 'showSquat.dart';
 import 'package:mapbox_gl/mapbox_gl.dart';
 import 'package:latlong2/latlong.dart' as latlong2;
 
+List<Squat> squats = [];
+bool loaded = false;
+Map<String, Squat> _symbolSquatMap = {};
 
 Future<bool> newSquat(
     String name, String location, String imageUrl, BuildContext context) async {
-  final url = Uri.parse('https://flushit.org/new_squat'); // Replace with your actual URL
-  // Create a Map to hold the data
-  final data = {'name': name, 'location': location, 'image': imageUrl, 'likes': 0};
-  // Encode the data as JSON
-  final jsonData = jsonEncode(data);
-  // Set the headers and make the POST request
-  final response = await http.post(
-    url,
-    headers: {'Content-Type': 'application/json'},
-    body: jsonData,
-  );
+  final token = await storage.readToken();
+  if (token == null) {
+    throw Exception('Token not found');
+  }
+  final url = Uri.parse('https://flushit.org/new_squat');
 
-  // Handle the response as needed
-  // ...
-  if (response.statusCode == 200 || response.statusCode == 201) {
-    return true;
-  } else {
+  final data = {
+    'name': name,
+    'location': location,
+    'image': imageUrl,
+    'likes': 0
+  };
+
+  final jsonData = jsonEncode(data);
+
+  try {
+    final response = await http.post(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token'
+      },
+      body: jsonData,
+    );
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      return true;
+    } else {
+      // If server's response is not successful, print the response body for debugging.
+      print('Server responded with status code: ${response.statusCode}');
+      print('Response body: ${response.body}');
+      return false;
+    }
+  } catch (e) {
+    // If there's an error in sending the request, print the error message for debugging.
+    print('Error making request to the server: $e');
     return false;
   }
 }
 
+
 class Home extends StatefulWidget {
   @override
   State<StatefulWidget> createState() => _LoadHome();
-
 }
 
-
 class _LoadHome extends State<Home> {
-
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<String?>(
-    future: storage.readToken(),
+      future: storage.readToken(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return Center(child: CircularProgressIndicator()); // Display a loading indicator
+          return Center(
+              child:
+                  CircularProgressIndicator()); // Display a loading indicator
         } else if (snapshot.hasError) {
           return Text('Error: ${snapshot.error}');
         } else if (snapshot.hasData && snapshot.data != null) {
           // Now, call accessProtectedRoute with a String instead of Future<String?>
           return FutureBuilder<bool>(
-            future: accessProtectedRoute(snapshot.data!), // Assuming this returns Future<bool>
+            future: accessProtectedRoute(
+                snapshot.data!), // Assuming this returns Future<bool>
             builder: (context, innerSnapshot) {
               if (innerSnapshot.connectionState == ConnectionState.waiting) {
                 return Center(child: CircularProgressIndicator());
@@ -78,7 +102,7 @@ class _LoadHome extends State<Home> {
   }
 }
 
-void _LongClick(Point<double> point, LatLng){
+void _LongClick(Point<double> point, LatLng) {
   print("It was tapped for a long time at: " + LatLng.toString());
 }
 
@@ -87,133 +111,166 @@ class LoggedIn extends StatefulWidget {
   State<StatefulWidget> createState() => _HomeState();
 }
 
-class _HomeState extends State<LoggedIn> {
+class _HomeState extends State<LoggedIn> with SingleTickerProviderStateMixin {
+  TabController? _tabController;
   MapboxMapController? mapController;
-  List<Squat> squats = [];
-  Squat talmage = Squat(
-      name: "Talmage",
-      location: "At rat house",
-      likes: 4,
-      image: "wala",
-      coordinates: latlong2.LatLng(21.651938, -157.927192)
-  );
-  // squats.add(talmage);
+  // Squat talmage = Squat(
+  //     id: "234",
+  //     name: "Talmage",
+  //     location: "At rat house",
+  //     likes: 4,
+  //     image: "wala",
+  //     coordinates: latlong2.LatLng(21.651938, -157.927192));
+
   @override
   void initState() {
-    squats.add(talmage);
+    // squats.add(talmage);
+    _tabController = TabController(length: 4, vsync: this);
     super.initState();
+
   }
 
-
+  @override
+  void dispose() {
+    _tabController?.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-      return DefaultTabController(
-        length: 4,
-        child: Scaffold(
-            appBar: AppBar(
-              automaticallyImplyLeading: false,
-              title: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
-                      width: 30,
-                      margin: EdgeInsets.all(10),
-                      child: Image.asset('assets/FlushitIcon.png')),
-                  Text(
-                    'Flushit',
-                    style: TextStyle(
-                      color: Colors.white,
-                      letterSpacing: 2.0,
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
-              backgroundColor: Colors.deepPurple,
-              bottom: TabBar(
-                tabs: [
-                  Tab(
-                    icon: Icon(
-                      Icons.location_pin,
-                      color: Colors.white54,
-                    ),
-                  ),
-                  Tab(
-                      icon: Icon(
-                    Icons.add_box_rounded,
-                    color: Colors.white54,
-                  )),
-                  Tab(
-                      icon: Icon(
-                    Icons.person,
-                    color: Colors.white54,
-                  )),
-                  Tab(
-                      icon: Icon(
-                        Icons.map,
-                        color: Colors.white54,
-                      )),
-                ],
-              ),
-            ),
-            body: TabBarView(
-                physics: NeverScrollableScrollPhysics(),
-                children: [
-              Center(
-                  child: SquatView()),
-              Center(child: NewSquat()),
-              Center(
-                  child: UserInfo()),
+    return Scaffold(
+        appBar: AppBar(
+          automaticallyImplyLeading: false,
+          title: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
               Container(
-                height: 300,  // adjust as necessary
-                width: 300,
-                child: MapboxMap(
-                  accessToken: 'pk.eyJ1IjoibWlkZ2U1NDMyMSIsImEiOiJjbG5jMHE2czUwaHduMm1vMWwzaDl1ZmpmIn0.F0c9U1e6dg43W-28N_Qelg',
-                  onMapCreated: _onMapCreated,
-                  onMapLongClick: _LongClick,
-                  onStyleLoadedCallback: _addSquatSymbols,
-                  initialCameraPosition: const CameraPosition(
-                    target: LatLng(21.64, -157.92), // This is just a starting point, you can adjust as necessary
-                    zoom: 11.0,
-                  ),
-                  myLocationEnabled: true,
-                  myLocationTrackingMode: MyLocationTrackingMode.Tracking,
+                  width: 30,
+                  margin: EdgeInsets.all(10),
+                  child: Image.asset('assets/FlushitIcon.png')),
+              Text(
+                'Flushit',
+                style: TextStyle(
+                  color: Colors.white,
+                  letterSpacing: 2.0,
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
-            ])),
-      );
-      //
-      throw UnimplementedError();
+            ],
+          ),
+          backgroundColor: Colors.deepPurple,
+          bottom: TabBar(
+            controller: _tabController,
+            tabs: [
+              Tab(
+                icon: Icon(
+                  Icons.location_pin,
+                  color: Colors.white54,
+                ),
+              ),
+              Tab(
+                  icon: Icon(
+                Icons.add_box_rounded,
+                color: Colors.white54,
+              )),
+              Tab(
+                  icon: Icon(
+                Icons.person,
+                color: Colors.white54,
+              )),
+              Tab(
+                  icon: Icon(
+                Icons.map,
+                color: Colors.white54,
+              )),
+            ],
+          ),
+        ),
+        body: TabBarView(physics: NeverScrollableScrollPhysics(), controller: _tabController, children: [
+          Center(child: SquatView()),
+          Center(child: NewSquat(tabController: _tabController,)),
+          Center(child: UserInfo()),
+          Container(
+            height: 300, // adjust as necessary
+            width: 300,
+            child: MapboxMap(
+
+              accessToken:
+                  'pk.eyJ1IjoibWlkZ2U1NDMyMSIsImEiOiJjbG5jMHE2czUwaHduMm1vMWwzaDl1ZmpmIn0.F0c9U1e6dg43W-28N_Qelg',
+              onMapCreated: _onMapCreated,
+              onMapLongClick: _LongClick,
+              onStyleLoadedCallback: _addSquatSymbols,
+              initialCameraPosition: const CameraPosition(
+                target: LatLng(21.64,
+                    -157.92), // This is just a starting point, you can adjust as necessary
+                zoom: 11.0,
+              ),
+              myLocationEnabled: true,
+              myLocationTrackingMode: MyLocationTrackingMode.Tracking,
+
+            ),
+          ),
+        ]));
+    //
+    throw UnimplementedError();
     /*} else {
 
     }*/
   }
+
   void _onMapCreated(MapboxMapController controller) {
     mapController = controller;
     // _addSquatSymbols();
   }
 
   void _addSquatSymbols() {
+    int x = 0;
     for (var squat in squats) {
-      mapController?.addSymbol(SymbolOptions(
-        geometry: LatLng(
-          squat.coordinates!.latitude,
-          squat.coordinates!.longitude, // longitude
-        ),
-        iconImage: 'airport-15', // This assumes you've added a custom marker icon, else you can use 'airport-15' for example
-        iconSize: 1.0,
-        textField: squat.name,
-        textSize: 12.0,
-        textOffset: Offset(0, 2), // adjust offset as needed
-      ));
-    }
-  }
+      print("Heres a squat");
+      if(squat.coordinates != null) {
+        print("There I found a squat with coordinates: " +squat.name);
+        print(squat.coordinates!.latitude.runtimeType);
+        print(squat.coordinates!.longitude.runtimeType);
+        x++;
+        final symbol = mapController?.addSymbol(SymbolOptions(
+          geometry: LatLng(
+            squat.coordinates!.latitude,
+            squat.coordinates!.longitude, // longitude
+          ),
 
+          iconImage:
+          'assets/FlushitIcon.png',
+          // This assumes you've added a custom marker icon, else you can use 'airport-15' for example
+          iconSize: 0.07,
+          textField: squat.name,
+          textSize: 12.0,
+          textOffset: Offset(0, 2),
+          // adjust offset as needed
+        )
+        );
+        // _symbolSquatMap.add(symbol, squat);
+        
+      }
+    }
+    mapController?.onSymbolTapped.add((symbol) {
+      print("A symbol was tapped");
+      print(symbol);
+      // Deserialize the Squat object from the symbol's data
+      // final squatData = jsonDecode(symbol.data!);
+      // final tappedSquat = Squat.fromJson(squatData);
+
+      // Show the bottom sheet
+      // _showSquatBottomSheet(context, tappedSquat);
+    });
+  }
 }
 
 class NewSquat extends StatefulWidget {
+  final TabController? tabController;
+
+  NewSquat({this.tabController});
+
   @override
   State<StatefulWidget> createState() => _NewSquatState();
 }
@@ -232,7 +289,6 @@ class _NewSquatState extends State<NewSquat> {
         child: Container(
           width: 450,
           height: 600,
-
           child: Padding(
             padding: const EdgeInsets.all(30.0),
             child: Column(
@@ -311,6 +367,16 @@ class _NewSquatState extends State<NewSquat> {
                           enteredLocation != '') {
                         newSquat(enteredName, enteredLocation, enteredImageUrl,
                             context);
+                        widget.tabController?.animateTo(0);
+                        final snackBar = SnackBar(
+                          content: Text('Squat Created Successfully'),
+                          duration: Duration(seconds: 2),  // Duration to show the SnackBar
+                          // Optionally add an action for more user interaction
+                        );
+
+                        // Display the snackbar
+                        ScaffoldMessenger.of(context).showSnackBar(snackBar);
+
                       } else {
                         errorMessage =
                             'Please enter a name, location and url for your squat';
@@ -346,52 +412,62 @@ class SquatView extends StatefulWidget {
 class _NewSquatView extends State<SquatView> {
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<List<Squat>>(
-      future: fetchSquats(), // Call the asynchronous function here
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return Center(child: CircularProgressIndicator()); // Display a loading indicator
-        } else if (snapshot.hasError) {
-          return LoggedOut();
-        } else if (snapshot.hasData) {
-          return SquatListView(
-              squats: snapshot.data!); // Pass the actual data
-        } else {
-          return Text('No data available.');
-        }
-      },
-    );
+    if(!loaded)
+      return FutureBuilder<List<Squat>>(
+        future: fetchSquats(), // Call the asynchronous function here
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return Center(
+                child:
+                    CircularProgressIndicator()); // Display a loading indicator
+          } else if (snapshot.hasError) {
+            print(snapshot.error);
+            return LoggedOut();
+          } else if (snapshot.hasData) {
+            for(Squat x in snapshot.data!){
+              squats.add(x);
+            }
+            loaded = true;
+            return SquatListView(/*squats: snapshot.data!*/); // Pass the actual data
+          } else {
+            return Text('No data available.');
+          }
+        },
+      );
+    else
+      return SquatListView();
   }
 }
 
 class SquatListView extends StatefulWidget {
-  final List<Squat> squats;
+  // final List<Squat> squats;
 
-  SquatListView({required this.squats});
+  // SquatListView({required this.squats});
 
   @override
-  State<StatefulWidget> createState() => _SquatListWidget(squats: squats);
+  State<StatefulWidget> createState() => _SquatListWidget(/*squats: squats*/);
 }
 
 class _SquatListWidget extends State<SquatListView> {
-
-  late final List<Squat> squats;
+  // late final List<Squat> squats;
   Squat? selectedSquat;
-  _SquatListWidget({required this.squats});
+  // _SquatListWidget({required this.squats});
 
   // SquatListWidget({required this.squats});
 
   @override
   Widget build(BuildContext context) {
-    if(selectedSquat != null){
-      return ShowSquat(squat: selectedSquat, onBack: () {
-        setState(() {
-          selectedSquat = null;
-        });
-      });
+    if (selectedSquat != null) {
+      return ShowSquat(
+          squat: selectedSquat,
+          onBack: () {
+            setState(() {
+              selectedSquat = null;
+            });
+          });
     }
     double screenWidth = MediaQuery.of(context).size.width;
-    int columnsCount = (screenWidth ~/200) as int;
+    int columnsCount = (screenWidth ~/ 200) as int;
 
     return Padding(
       padding: const EdgeInsets.all(10.0),
@@ -423,12 +499,14 @@ class _SquatListWidget extends State<SquatListView> {
                     child: Padding(
                       padding: const EdgeInsets.all(8.0),
                       child: ClipRRect(
-                    borderRadius: BorderRadius.vertical(top: Radius.circular(10.0), bottom:Radius.circular(10.0) ),
-              child: Image.network(
-                squat.image,
-                fit: BoxFit.cover,
-              ),
-            ),
+                        borderRadius: BorderRadius.vertical(
+                            top: Radius.circular(10.0),
+                            bottom: Radius.circular(10.0)),
+                        child: Image.network(
+                          squat.image,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
                     ),
                   ),
                   Padding(
@@ -458,7 +536,10 @@ class _SquatListWidget extends State<SquatListView> {
                         Expanded(child: SizedBox()),
                         Column(
                           children: [
-                            IconButton(icon: Icon(Icons.favorite_border), onPressed: () {  }, ),
+                            IconButton(
+                              icon: Icon(Icons.favorite_border),
+                              onPressed: () {},
+                            ),
                             Text(squat.likes.toString()),
                           ],
                         ),
@@ -475,13 +556,13 @@ class _SquatListWidget extends State<SquatListView> {
   }
 }
 
-
 Future<List<Squat>> fetchSquats() async {
   final token = await storage.readToken();
   if (token == null) {
     throw Exception('Token not found');
   }
-  final url = Uri.parse('https://flushit.org/squats'); // Replace with your actual URL
+  final url =
+      Uri.parse('https://flushit.org/squats'); // Replace with your actual URL
   // Create a Map to hold the data
   // Set the headers and make the POST request
   final response = await http.get(url, headers: {
@@ -492,11 +573,12 @@ Future<List<Squat>> fetchSquats() async {
   // ...
   if (response.statusCode == 200 || response.statusCode == 201) {
     final List<dynamic> jsonData = json.decode(response.body);
+    print("Successful retrival of squats!");
     return jsonData.map((data) => Squat.fromJson(data)).toList();
   } else {
-
+    print('Server responded with status code: ${response.statusCode}');
+    print('Response body: ${response.body}'); // This will print the response body
     throw Exception('Failed to load squats');
-
   }
 }
 
@@ -565,14 +647,16 @@ class _ImagePickerScreenState extends State<ImagePickerScreen> {
 }
 
 Future<bool> like(String id) async {
-  final url = Uri.parse('https://flushit.org/like'); // Replace with your actual URL
+  final url =
+      Uri.parse('https://flushit.org/like'); // Replace with your actual URL
   // Create a Map to hold the data
   // Encode the data as JSON
   // Set the headers and make the POST request
   final response = await http.patch(
     url,
     headers: {'Content-Type': 'application/json'},
-    body: null, //somehow make it so it just adds one to the number of likes already there
+    body:
+        null, //somehow make it so it just adds one to the number of likes already there
   );
 
   // Handle the response as needed
@@ -583,3 +667,5 @@ Future<bool> like(String id) async {
     return false;
   }
 }
+
+
