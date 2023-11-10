@@ -31,6 +31,8 @@ Future<bool> isEmailAvailable(String email) async {
   }
 }
 
+
+
 Future<bool> updateUser({ String? updatedUsername, String? updatedEmail, String? updatedProfilePicture, }) async {
   final token = await storage.readToken();
   if (token == null) {

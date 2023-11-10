@@ -120,19 +120,28 @@ app.get('/', (req, res) => {
 });
 
 app.post('/new_squat', authenticateToken, async(req, res) => {
-    const { name, location, image, likes } = req.body;
+    const { name, location, image, likes, coordinates } = req.body;
     const ownerId = req.user.userId; // Assuming the user ID is available on req.user._id
-    const newSquat = new Squat({
-     owner: ownerId,
-     name,
-     location,
-     image,
-     likes
-    });
-    await newSquat.save();
-    res.status(201).json({ message: 'Squat created successfully' });
 
+    const newSquat = new Squat({
+        owner: ownerId,
+        name,
+        location,
+        image,
+        likes,
+        coordinates // Add this line to include coordinates
+    });
+
+    try {
+        await newSquat.save();
+        res.status(201).json({ message: 'Squat created successfully' });
+    } catch (error) {
+        // Handle any errors that occur during the save
+        console.error('Error creating squat:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
 });
+
 
 app.get('/user-data', authenticateToken, async (req, res) => {
     try {

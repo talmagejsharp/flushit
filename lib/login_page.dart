@@ -3,10 +3,8 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'home.dart';
 import 'main.dart';
-import 'secure_storage_service.dart';
-import 'package:flutter/foundation.dart';
-import 'package:flushit/storage.dart';
 
 bool loggedIn = false;
 String errorMessage = "";
@@ -44,6 +42,33 @@ class Login extends StatefulWidget {
 }
 
 class _LoginWidgetState extends State<Login> {
+
+  @override
+  void initState() {
+    super.initState();
+    checkLoginStatus();
+  }
+
+  void checkLoginStatus() async {
+    String? token = await storage.readToken(); // Read the stored token
+    if (token != null) {
+      bool isLoggedIn = await accessProtectedRoute(token);
+      if (isLoggedIn) {
+        // If logged in, redirect to another page
+        Navigator.pushReplacementNamed(context, '/home');
+        final snackBar = SnackBar(
+          content: Text('Automatically redirected to home'),
+          duration: Duration(seconds: 2),  // Duration to show the SnackBar
+          // Optionally add an action for more user interaction
+        );
+
+        // Display the snackbar
+        ScaffoldMessenger.of(context).showSnackBar(snackBar);
+      }
+    }
+  }
+
+
   final FocusNode _passwordFocus = FocusNode();
   attemptLogin(String username, String password, context) async {
     if (username != "" && password != "") {

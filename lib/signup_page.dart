@@ -2,7 +2,9 @@ import 'dart:convert';
 import 'package:flushit/userInfo.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'home.dart';
 import 'login_page.dart';
+import 'main.dart';
 
 Future<void> registerUser(String username, String email,  String password, BuildContext context) async {
   final url = Uri.parse('https://flushit.org/register'); // Replace with your actual URL
@@ -34,6 +36,32 @@ class SignUp extends StatefulWidget {
   State<StatefulWidget> createState() => _SignupWidgetState();
 }
 class _SignupWidgetState extends State<SignUp> {
+
+  @override
+  void initState() {
+    super.initState();
+    checkLoginStatus();
+  }
+
+  void checkLoginStatus() async {
+    String? token = await storage.readToken(); // Read the stored token
+    if (token != null) {
+      bool isLoggedIn = await accessProtectedRoute(token);
+      if (isLoggedIn) {
+        // If logged in, redirect to another page
+        Navigator.pushReplacementNamed(context, '/home');
+        final snackBar = SnackBar(
+          content: Text('Automatically redirected to home'),
+          duration: Duration(seconds: 2),  // Duration to show the SnackBar
+          // Optionally add an action for more user interaction
+        );
+
+        // Display the snackbar
+        ScaffoldMessenger.of(context).showSnackBar(snackBar);
+      }
+    }
+  }
+
   signUp(String username, String email, String password, BuildContext context) async {
     if (username.isNotEmpty && password.isNotEmpty && email.isNotEmpty) {
       if(username.length < 1){

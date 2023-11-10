@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import 'package:http/http.dart' as http;
+
 import 'main.dart';
 import 'notAuthenticated.dart';
 import 'Squat.dart';
@@ -18,19 +19,34 @@ bool loaded = false;
 Map<String, Squat> _symbolSquatMap = {};
 
 Future<bool> newSquat(
-    String name, String location, String imageUrl, BuildContext context) async {
+    String name,
+    String location,
+    String imageUrl,
+    {double? latitude,
+      double? longitude,
+      required BuildContext context}) async {
+
   final token = await storage.readToken();
   if (token == null) {
     throw Exception('Token not found');
   }
   final url = Uri.parse('https://flushit.org/new_squat');
 
+  // Prepare the data map
   final data = {
     'name': name,
     'location': location,
     'image': imageUrl,
-    'likes': 0
+    'likes': 0,
   };
+
+  // Add coordinates only if they are provided
+  if (latitude != null && longitude != null) {
+    data['coordinates'] = {
+      'type': 'Point',
+      'coordinates': [longitude, latitude]
+    };
+  }
 
   final jsonData = jsonEncode(data);
 
@@ -48,13 +64,13 @@ Future<bool> newSquat(
       return true;
     } else {
       // If server's response is not successful, print the response body for debugging.
-      print('Server responded with status code: ${response.statusCode}');
-      print('Response body: ${response.body}');
+      // print('Server responded with status code: ${response.statusCode}');
+      // print('Response body: ${response.body}');
       return false;
     }
   } catch (e) {
     // If there's an error in sending the request, print the error message for debugging.
-    print('Error making request to the server: $e');
+    // print('Error making request to the server: $e');
     return false;
   }
 }
@@ -102,9 +118,8 @@ class _LoadHome extends State<Home> {
   }
 }
 
-void _LongClick(Point<double> point, LatLng) {
-  print("It was tapped for a long time at: " + LatLng.toString());
-}
+
+
 
 class LoggedIn extends StatefulWidget {
   @override
@@ -114,6 +129,8 @@ class LoggedIn extends StatefulWidget {
 class _HomeState extends State<LoggedIn> with SingleTickerProviderStateMixin {
   TabController? _tabController;
   MapboxMapController? mapController;
+  Map<String, Squat> symbolToSquatMap = {};  // Map to hold symbols and their corresponding data
+
   // Squat talmage = Squat(
   //     id: "234",
   //     name: "Talmage",
@@ -136,8 +153,24 @@ class _HomeState extends State<LoggedIn> with SingleTickerProviderStateMixin {
     super.dispose();
   }
 
+  void _LongClick(Point<double> point, LatLng latLng) {
+    print("It was tapped for a long time at: " + latLng.toString());
+    showModalBottomSheet(
+      context: context,
+      builder: (BuildContext context) {
+        return NewSquat(
+          coordinates: latLng, // Pass the tapped coordinates
+        );
+      },
+    );
+  }
+
+  @override
+  bool get wantKeepAlive => true; // Add this line
+
   @override
   Widget build(BuildContext context) {
+
     return Scaffold(
         appBar: AppBar(
           automaticallyImplyLeading: false,
@@ -212,11 +245,10 @@ class _HomeState extends State<LoggedIn> with SingleTickerProviderStateMixin {
             ),
           ),
         ]));
-    //
-    throw UnimplementedError();
-    /*} else {
 
-    }*/
+    throw UnimplementedError();
+
+
   }
 
   void _onMapCreated(MapboxMapController controller) {
@@ -224,52 +256,56 @@ class _HomeState extends State<LoggedIn> with SingleTickerProviderStateMixin {
     // _addSquatSymbols();
   }
 
-  void _addSquatSymbols() {
-    int x = 0;
-    for (var squat in squats) {
-      print("Heres a squat");
-      if(squat.coordinates != null) {
-        print("There I found a squat with coordinates: " +squat.name);
-        print(squat.coordinates!.latitude.runtimeType);
-        print(squat.coordinates!.longitude.runtimeType);
-        x++;
-        final symbol = mapController?.addSymbol(SymbolOptions(
+  void _addSquatSymbols() async {
+
+    await Future.forEach(squats, (Squat squat) async {
+      if (squat.coordinates != null) {
+        final symbol = await mapController?.addSymbol(SymbolOptions(
           geometry: LatLng(
             squat.coordinates!.latitude,
-            squat.coordinates!.longitude, // longitude
+            squat.coordinates!.longitude,
           ),
-
-          iconImage:
-          'assets/FlushitIcon.png',
-          // This assumes you've added a custom marker icon, else you can use 'airport-15' for example
+          iconImage: 'assets/FlushitIcon.png',
           iconSize: 0.07,
           textField: squat.name,
           textSize: 12.0,
           textOffset: Offset(0, 2),
-          // adjust offset as needed
-        )
-        );
-        // _symbolSquatMap.add(symbol, squat);
-        
-      }
-    }
-    mapController?.onSymbolTapped.add((symbol) {
-      print("A symbol was tapped");
-      print(symbol);
-      // Deserialize the Squat object from the symbol's data
-      // final squatData = jsonDecode(symbol.data!);
-      // final tappedSquat = Squat.fromJson(squatData);
+        ));
 
-      // Show the bottom sheet
-      // _showSquatBottomSheet(context, tappedSquat);
+        if (symbol != null) {
+          // Store the symbol and its corresponding data
+          symbolToSquatMap[symbol.id] = squat;
+        }
+      }
+    });
+    mapController?.onSymbolTapped.add((symbol) {
+      print("A symbol was tapped: ${symbol.id}");
+      Squat? tappedSquat = symbolToSquatMap[symbol.id];
+      if (tappedSquat != null) {
+        // Do something with the tapped squat
+        _showSquatBottomSheet(context, tappedSquat);
+      }
     });
   }
 }
 
+void _showSquatBottomSheet(BuildContext context, Squat squat) {
+  showModalBottomSheet(
+    context: context,
+    builder: (context) {
+      return ShowSquat(squat: squat, onBack: (){
+        Navigator.pop(context);
+      });  // Replace ShowSquatWidget with your widget's name, and pass the squat object to it.
+    },
+  );
+}
+
+
 class NewSquat extends StatefulWidget {
   final TabController? tabController;
+  final LatLng? coordinates; // Add this line
 
-  NewSquat({this.tabController});
+  NewSquat({this.tabController, this.coordinates});
 
   @override
   State<StatefulWidget> createState() => _NewSquatState();
@@ -281,6 +317,15 @@ class _NewSquatState extends State<NewSquat> {
   String enteredLocation = '';
   String enteredImageUrl = '';
   int numberOfLikes = 0;
+  LatLng? coordinates; // Add this line
+
+  @override
+  void initState() {
+    super.initState();
+    coordinates = widget.coordinates;
+    print(coordinates);// Initialize coordinates
+  }
+
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
@@ -362,20 +407,44 @@ class _NewSquatState extends State<NewSquat> {
                           Colors.deepPurpleAccent),
                     ),
                     onPressed: () {
+                      print(coordinates?.latitude);
+                      print(coordinates?.longitude);
                       if (enteredName != '' &&
                           enteredImageUrl != '' &&
                           enteredLocation != '') {
-                        newSquat(enteredName, enteredLocation, enteredImageUrl,
-                            context);
-                        widget.tabController?.animateTo(0);
-                        final snackBar = SnackBar(
-                          content: Text('Squat Created Successfully'),
-                          duration: Duration(seconds: 2),  // Duration to show the SnackBar
-                          // Optionally add an action for more user interaction
-                        );
+                        if(coordinates != null){
+                          newSquat(
+                              enteredName,
+                              enteredLocation,
+                              enteredImageUrl,
+                              latitude: coordinates?.latitude,
+                              longitude: coordinates?.longitude,
+                              context: context
+                          );
+                        } else {
+                          newSquat(
+                              enteredName,
+                              enteredLocation,
+                              enteredImageUrl,
+                              context: context
+                          );
+                        }
+                        loaded = false;
+                        setState(() {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => LoggedIn()),
+                          );
+                          final snackBar = SnackBar(
+                            content: Text('Squat Created Successfully'),
+                            duration: Duration(
+                                seconds: 2), // Duration to show the SnackBar
+                            // Optionally add an action for more user interaction
+                          );
 
-                        // Display the snackbar
-                        ScaffoldMessenger.of(context).showSnackBar(snackBar);
+                          // Display the snackbar
+                          ScaffoldMessenger.of(context).showSnackBar(snackBar);
+                        });
 
                       } else {
                         errorMessage =
@@ -515,27 +584,30 @@ class _SquatListWidget extends State<SquatListView> {
                     padding: const EdgeInsets.all(8.0),
                     child: Row(
                       children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              squat.name,
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 14,
+                        Expanded( // Use Expanded to ensure the text only takes available space
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                squat.name,
+                                overflow: TextOverflow.ellipsis, // Use ellipsis for overflow
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14,
+                                ),
                               ),
-                            ),
-                            SizedBox(height: 4),
-                            Text(
-                              squat.location,
-                              style: TextStyle(
-                                color: Colors.grey,
-                                fontSize: 14,
+                              SizedBox(height: 4),
+                              Text(
+                                squat.location,
+                                overflow: TextOverflow.ellipsis, // Use ellipsis for overflow
+                                style: TextStyle(
+                                  color: Colors.grey,
+                                  fontSize: 14,
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
-                        Expanded(child: SizedBox()),
                         Column(
                           children: [
                             IconButton(

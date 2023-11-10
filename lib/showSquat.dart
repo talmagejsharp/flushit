@@ -1,4 +1,4 @@
-import 'package:flutter/cupertino.dart';
+
 import 'package:flutter/material.dart';
 import 'Squat.dart';
 import 'package:http/http.dart' as http;
@@ -397,13 +397,6 @@ Future<bool> updateSquat({
   }
 }
 
-void _showSquatBottomSheet(BuildContext context, Squat squat) {
-  showModalBottomSheet(
-    context: context,
-    builder: (context) {
-      return ShowSquat(squat: squat, onBack: (){});  // Replace ShowSquatWidget with your widget's name, and pass the squat object to it.
-    },
-  );
-}
+
 
 

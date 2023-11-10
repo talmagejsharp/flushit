@@ -62,7 +62,30 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
 
+  @override
+  void initState() {
+    super.initState();
+    checkLoginStatus();
+  }
 
+  void checkLoginStatus() async {
+    String? token = await storage.readToken(); // Read the stored token
+    if (token != null) {
+      bool isLoggedIn = await accessProtectedRoute(token);
+      if (isLoggedIn) {
+        // If logged in, redirect to another page
+        Navigator.pushReplacementNamed(context, '/home');
+        final snackBar = SnackBar(
+          content: Text('Automatically redirected to home'),
+          duration: Duration(seconds: 2),  // Duration to show the SnackBar
+          // Optionally add an action for more user interaction
+        );
+
+        // Display the snackbar
+        ScaffoldMessenger.of(context).showSnackBar(snackBar);
+      }
+    }
+  }
 
 
   @override
