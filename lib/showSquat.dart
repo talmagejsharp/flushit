@@ -4,6 +4,7 @@ import 'Squat.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
+import 'home.dart' as home;
 import 'main.dart';
 
 class ShowSquat extends StatefulWidget {
@@ -24,6 +25,27 @@ class _ShowSquatState extends State<ShowSquat> {
   final imageUrlController = TextEditingController();
   final latController = TextEditingController();
   final longController = TextEditingController();
+
+  Future<bool> deleteSquat(String squatId) async {
+    final token = await storage.readToken();
+    if (token == null) {
+      throw Exception('Token not found');
+    }
+
+    final url = Uri.parse('https://flushit.org/squats/$squatId');
+    final response = await http.delete(
+      url,
+      headers: {
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      return true;
+    } else {
+      return false;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -85,6 +107,61 @@ class _ShowSquatState extends State<ShowSquat> {
                           });
                         },
                         icon: Icon(Icons.edit),
+                      ),
+                    if(widget.squat?.isOwner == true)
+                      IconButton(
+                        icon: Icon(Icons.delete),
+                        onPressed: () async {
+                          final shouldDelete = await showDialog<bool>(
+                            context: context,
+                            builder: (context) => AlertDialog(
+                              title: Text('Delete Squat'),
+                              content: Text('Are you sure you want to delete this squat?'),
+                              actions: <Widget>[
+                                TextButton(
+                                  child: Text('Cancel'),
+                                  onPressed: () => Navigator.of(context).pop(false),
+                                ),
+                                TextButton(
+                                  child: Text('Delete'),
+                                  onPressed: () => Navigator.of(context).pop(true),
+                                ),
+                              ],
+                            ),
+                          );
+
+                          if (shouldDelete ?? false) {
+                            final success = await deleteSquat(widget.squat!.id);
+                            if (success) {
+                              home.loaded = false;
+                              isEditing = false;
+                              setState(() {
+                                final snackBar = SnackBar(
+                                  content: Text('Squat Deleted Successfully'),
+                                  duration: Duration(seconds: 2),  // Duration to show the SnackBar
+                                  // Optionally add an action for more user interaction
+                                );
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(builder: (context) => home.LoggedIn()),
+                                );
+                                // Display the snackbar
+                                ScaffoldMessenger.of(context).showSnackBar(snackBar);
+                                // if (updatedName != null) squatData!['name'] = updatedName;
+                                // if (updatedLocation != null) squatData!['location'] = updatedLocation;
+                                // if (updatedImage != null) squatData!['image'] = updatedImage;
+                                // if (updatedCoordinates != null) squatData!['coordinates'] = updatedCoordinates;
+
+
+                                // widget.isLoaded = false;
+                              }); // Call the onBack callback to refresh or go back
+                            } else {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text('Failed to delete squat')),
+                              );
+                            }
+                          }
+                        },
                       ),
                   ],
                 ),
@@ -222,20 +299,27 @@ class _ShowSquatState extends State<ShowSquat> {
 
                           // Handle backend update
                           if (success) {
+                            home.loaded = false;
+                            isEditing = false;
                             setState(() {
                               final snackBar = SnackBar(
                                 content: Text('Squat updated Successfully'),
                                 duration: Duration(seconds: 2),  // Duration to show the SnackBar
                                 // Optionally add an action for more user interaction
                               );
-
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (context) => home.LoggedIn()),
+                              );
                               // Display the snackbar
                               ScaffoldMessenger.of(context).showSnackBar(snackBar);
                               // if (updatedName != null) squatData!['name'] = updatedName;
                               // if (updatedLocation != null) squatData!['location'] = updatedLocation;
                               // if (updatedImage != null) squatData!['image'] = updatedImage;
                               // if (updatedCoordinates != null) squatData!['coordinates'] = updatedCoordinates;
-                              isEditing = false;
+
+
+                              // widget.isLoaded = false;
                             });
                           }
                         },

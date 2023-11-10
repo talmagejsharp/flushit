@@ -36,11 +36,11 @@ class SignUp extends StatefulWidget {
 class _SignupWidgetState extends State<SignUp> {
   signUp(String username, String email, String password, BuildContext context) async {
     if (username.isNotEmpty && password.isNotEmpty && email.isNotEmpty) {
-      if(username.length < 5){
-        errorMessage = "Minimum length of username is 5 characters";
+      if(username.length < 1){
+        errorMessage = "Minimum length of username is 1 character";
         setState(() {});
-      } else if (password.length < 8){
-        errorMessage = "Minimum length of password is 8 characters";
+      } else if (password.length < 5){
+        errorMessage = "Minimum length of password is 5 characters";
         setState(() {});
       } else {
         bool usernameAvailable = await isUsernameAvailable(username);
@@ -139,7 +139,6 @@ class _SignupWidgetState extends State<SignUp> {
                   SizedBox(height: 16),
                   TextField(
                     onEditingComplete: () {
-                      print('The password is : ' + passwordController.text);
                       signUp(usernameController.text, emailController.text, passwordController.text,  context);
                     },
                     focusNode: _passwordFocus,

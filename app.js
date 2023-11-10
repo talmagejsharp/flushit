@@ -36,6 +36,25 @@ function authenticateToken(req, res, next) {
   });
 }
 
+async function isAdmin(req, res, next) {
+    try {
+        const userId = req.user.userId;
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        req.user.isAdmin = user.role === "admin";
+//        console.log(req.user.isAdmin);
+
+        next(); // proceed to the next middleware/route handler
+    } catch (error) {
+//        console.log(error);
+        return res.status(500).json({ message: 'Server error' });
+    }
+}
+
+
 
 
 app.use(express.static(path.join(__dirname, '/')));
@@ -118,6 +137,7 @@ app.post('/new_squat', authenticateToken, async(req, res) => {
 app.get('/user-data', authenticateToken, async (req, res) => {
     try {
     const userId = req.user.userId;
+
     const user = await User.findById(userId);
 
     if(!user){
@@ -132,7 +152,7 @@ app.get('/user-data', authenticateToken, async (req, res) => {
 
 app.post('/update-squat', authenticateToken, async (req, res) => {
     try {
-        console.log("received an update request");
+//        console.log("received an update request");
         const squatId = req.body.squatId; // Assuming you pass the squat's ID in the request body.
         // Extract data from request body
         const { name, location, likes, image, coordinates } = req.body;
@@ -168,6 +188,33 @@ app.post('/update-squat', authenticateToken, async (req, res) => {
         return res.status(500).json({ message: error.message });
     }
 });
+
+app.delete('/squats/:id', authenticateToken, async (req, res) => {
+  const squatId = req.params.id;
+  const userId = req.user.userId; // Assuming you have the user's ID from the token
+
+  try {
+    const squat = await Squat.findById(squatId);
+
+    if (!squat) {
+      return res.status(404).json({ error: 'Squat not found' });
+    }
+
+    const isOwner = squat.owner.toString() === userId;
+    const isAdmin = req.user.isAdmin; // Assuming you have an isAdmin flag in your user object
+
+    if (!isAdmin && !isOwner) {
+      return res.status(403).json({ error: 'Not authorized to delete this squat' });
+    }
+
+    await Squat.findByIdAndDelete(squatId);
+    res.status(200).json({ message: 'Squat deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting squat:', error);
+    res.status(500).json({ error: 'Error deleting squat' });
+  }
+});
+
 
 
 app.post('/update-user', authenticateToken, async (req, res) => {
@@ -221,27 +268,30 @@ app.get('/check_email/:email', async (req, res) => {
   }
 });
 
-app.get('/squats', authenticateToken, async (req, res) => {
+app.get('/squats', authenticateToken, isAdmin, async (req, res) => {
   try {
-    // Fetch all squats from the database
-    const squats = await Squat.find().lean(); // Using .lean() for better performance as we just need plain JavaScript objects
-    console.log('User ID:', req.user.userId);
-    // Add an 'isOwner' property to each squat
+    const squats = await Squat.find().lean();
+    console.log('Authenticated User ID:', req.user.userId);
+    console.log('Is Admin:', req.user.isAdmin);
+
     const squatsWithOwnership = squats.map(squat => {
-      console.log(`Logged in user ID: ${req.user.userId}`);
-      console.log(`Squat owner ID: ${squat.owner}`);
-      const isOwner = squat.owner ? req.user.userId === squat.owner.toString() : false;
-      console.log(`Squat ID: ${squat._id}, Owner: ${squat.owner}, isOwner: ${isOwner}`); // This will confirm the boolean value of isOwner
+      console.log('Squat Owner:', squat.owner);
+      var isOwner = squat.owner ? req.user.userId === squat.owner.toString() : false;
+      console.log('Is Owner:', isOwner);
+      if(!isOwner && req.user.isAdmin){
+        isOwner = req.user.isAdmin;
+      }
       return { ...squat, isOwner };
     });
 
-
-    res.json(squatsWithOwnership); // Return the modified squats as JSON response
+    console.log('Squats with Ownership:', squatsWithOwnership);
+    res.json(squatsWithOwnership);
   } catch (error) {
     console.error('Error fetching squats:', error);
     res.status(500).json({ error: 'Error fetching squats' });
   }
 });
+
 
 app.post('/register', async (req, res) => {
 //  console.log('attempting to post the username and password');

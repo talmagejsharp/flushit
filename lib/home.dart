@@ -412,6 +412,8 @@ class SquatView extends StatefulWidget {
 class _NewSquatView extends State<SquatView> {
   @override
   Widget build(BuildContext context) {
+    print("The squat is in fact loaded: ");
+    print(loaded);
     if(!loaded)
       return FutureBuilder<List<Squat>>(
         future: fetchSquats(), // Call the asynchronous function here
@@ -557,6 +559,7 @@ class _SquatListWidget extends State<SquatListView> {
 }
 
 Future<List<Squat>> fetchSquats() async {
+  squats = [];
   final token = await storage.readToken();
   if (token == null) {
     throw Exception('Token not found');
